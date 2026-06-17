@@ -134,7 +134,7 @@ var HW_MATERIALS = [
   { id: 'ring-binder',     label: 'Ring Binder',           fields: [{ ph: 'Qty', w: 50 }, { ph: '# of Rings', w: 80 }, { ph: 'Color', w: 90 }, { ph: 'Description / Size', w: 130 }] },
   { id: 'bands',           label: 'Bands',                 fields: [{ ph: 'Qty', w: 55 }, { ph: 'Size', w: 80 }, { ph: 'Color', w: 90 }] },
   { id: 'clips',           label: 'Clips',                 fields: [{ ph: 'Qty', w: 55 }, { ph: 'Color', w: 90 }] },
-  { id: 'romark',          label: 'Romark',                fields: [{ ph: 'Sheet Qty', w: 70 }, { ph: 'Size', w: 80 }, { ph: 'Color', w: 90 }, { ph: 'Thickness', w: 90 }] },
+  { id: 'romark',          label: 'Rowmark',               fields: [{ ph: 'Sheet Qty', w: 70 }, { ph: 'Size', w: 80 }, { ph: 'Color', w: 90 }, { ph: 'Thickness', w: 90 }] },
   { id: 'rivets',          label: 'Rivets',                fields: [{ ph: 'Qty', w: 55 }] },
   { id: 'plastic-sleeves', label: 'Plastic Sleeves',       fields: [{ ph: 'Qty', w: 55 }, { ph: 'Type / Size', w: 140 }] },
   { id: 'snaps',           label: 'Snaps',                 fields: [{ ph: 'Qty', w: 55 }, { ph: 'Line', w: 80 }, { ph: 'Type', w: 100 }] },

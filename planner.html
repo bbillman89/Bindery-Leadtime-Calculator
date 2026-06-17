@@ -143,8 +143,11 @@
       .rm,
       .row-rm,
       #export-status,
-      #tier-warning,
       #planner-active-jobs { display: none !important; }
+
+      /* Swap editable tables for card print view */
+      #planner-screen-data { display: none !important; }
+      #planner-print-view  { display: block; }
 
       /* Sheet: no shadow, no margin */
       .sheet { box-shadow: none !important; margin: 0 !important; }
@@ -311,6 +314,9 @@
         </div>
       </div>
 
+      <!-- SCREEN-ONLY DATA SECTIONS (hidden in print; replaced by #planner-print-view) -->
+      <div id="planner-screen-data">
+
       <!-- COVER MATERIALS -->
       <div class="band mixed">Cover Materials</div>
       <div class="section">
@@ -389,6 +395,11 @@
         <div class="card-grid" id="interior-cards"></div>
       </div>
 
+      </div><!-- /#planner-screen-data -->
+
+      <!-- PRINT-ONLY card view (populated by buildPlannerPrintView in doSave) -->
+      <div id="planner-print-view"></div>
+
       <!-- LEAD TIME -->
       <div class="band p1">Lead Time Assessment</div>
       <div class="section">
@@ -416,7 +427,7 @@
         </div>
         <div id="tier-warning" style="display:flex; align-items:center; gap:6px; margin-top:8px; background:var(--tier-t3-bg); border:1px solid var(--tier-t3-border); border-radius:20px; padding:4px 12px; color:var(--tier-t3-text);">
           <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>Tier assumes all materials in-house. May increase after Coordinator confirms availability.</span>
+          <span>Tier may increase after coordinator reviews material availability.</span>
         </div>
       </div>
 
@@ -564,19 +575,60 @@
     var _hwRowN = 0;
 
     var HW_PLANNER_CONFIG = [
-      { id: 'magnets',          label: 'Magnets',               fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
-      { id: 'elastic-cords',    label: 'Elastic Cords / Loops', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
-      { id: 'eyelets',          label: 'Eyelets',               fields: [{ id: 'size',  label: 'Size' },          { id: 'color', label: 'Color' }] },
-      { id: 'o-rings',          label: 'O-Rings',               fields: [{ id: 'desc',  label: 'Description' }] },
-      { id: 'ring-binder',      label: 'Ring Binder',           fields: [{ id: 'rings', label: '# of Rings' }, { id: 'color', label: 'Color' }, { id: 'size', label: 'Description / Size' }] },
-      { id: 'bands',            label: 'Bands',                 fields: [{ id: 'size',  label: 'Size' },          { id: 'color', label: 'Color' }] },
-      { id: 'clips',            label: 'Clips',                 fields: [{ id: 'color', label: 'Color' }] },
-      { id: 'romark',           label: 'Romark',                fields: [{ id: 'size',  label: 'Size' }, { id: 'color', label: 'Color' }, { id: 'thickness', label: 'Thickness' }] },
-      { id: 'rivets',           label: 'Rivets',                fields: [{ id: 'desc',  label: 'Description' }] },
-      { id: 'plastic-sleeves',  label: 'Plastic Sleeves',       fields: [{ id: 'type',  label: 'Type / Size' }] },
-      { id: 'snaps',            label: 'Snaps',                 fields: [{ id: 'line',  label: 'Line' }, { id: 'type', label: 'Type' }] },
-      { id: 'screw-posts',      label: 'Screw Posts',           fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
-      { id: 'custom-hardware',  label: 'Custom Hardware',       fields: [{ id: 'desc',  label: 'Description' }] }
+      { id: 'magnets',         label: 'Magnets',               fields: [
+          { id: 'desc', label: 'Description', list: 'dl-hw-mag-desc',
+            options: ['BX081-N52 — 1/2" × 1" | 1/16" thick', 'D62-N52 — 3/8" round | 1/8" thick'] }
+        ] },
+      { id: 'elastic-cords',  label: 'Elastic Cords / Loops', fields: [
+          { id: 'color',  label: 'Color',  list: 'dl-hw-ec-color',  options: ['Black', 'Gold', 'White'] },
+          { id: 'style',  label: 'Style',  list: 'dl-hw-ec-style',  options: ['Silver Barb', 'Gold Barb', 'Silver Ball', 'Gold Ball'] },
+          { id: 'length', label: 'Length', list: 'dl-hw-ec-length', options: ['5"', '5.5"', '6"', '6.5"', '7.5"', '8"', '8.5"', '9"', '9.5"', '10"', '11"'] }
+        ] },
+      { id: 'eyelets',        label: 'Eyelets',               fields: [
+          { id: 'size',  label: 'Size',  list: 'dl-hw-ey-size',  options: ['3/16"', '1/4"'] },
+          { id: 'color', label: 'Color', list: 'dl-hw-ey-color', options: ['Brass', 'Nickel', 'Black', 'Copper'] }
+        ] },
+      { id: 'o-rings',        label: 'O-Rings',               fields: [
+          { id: 'desc', label: 'Description' }
+        ] },
+      { id: 'ring-binder',   label: 'Ring Binder',           fields: [
+          { id: 'model', label: 'Model', list: 'dl-hw-rb-model',
+            options: ['2-ring — 0916-3102', '3-ring — 15mm short — STR212-3-13', '3-ring — 15mm long — STR277-3-13',
+                      '3-ring — 1/2" short — IM85N', '3-ring — 1/2" long — 0905-7101',
+                      '3-ring — 3/4" short — IN87N', '3-ring — 3/4" long — 0975-7101'] }
+        ] },
+      { id: 'bands',          label: 'Bands',                 fields: [
+          { id: 'color', label: 'Color', list: 'dl-hw-bands-color', options: ['Black', 'Blue', 'Red', 'Orange', 'White'] },
+          { id: 'size',  label: 'Size',  list: 'dl-hw-bands-size',  options: ['106', '35A', '74'] }
+        ] },
+      { id: 'clips',          label: 'Clips',                 fields: [
+          { id: 'color', label: 'Color', list: 'dl-hw-clips-color', options: ['Black', 'Antique Brass', 'Nickel'] }
+        ] },
+      { id: 'romark',         label: 'Rowmark',               fields: [
+          { id: 'size',      label: 'Size' },
+          { id: 'color',     label: 'Color' },
+          { id: 'thickness', label: 'Thickness' }
+        ] },
+      { id: 'rivets',         label: 'Rivets',                fields: [
+          { id: 'desc', label: 'Description' }
+        ] },
+      { id: 'plastic-sleeves', label: 'Plastic Sleeves',      fields: [
+          { id: 'type', label: 'Type / Size', list: 'dl-hw-ps-type',
+            options: ['3-Hole 8.5×11 Stock', '3-Hole 8.5×14', 'Spiral', 'Custom'] }
+        ] },
+      { id: 'snaps',          label: 'Snaps',                 fields: [
+          { id: 'line', label: 'Line', list: 'dl-hw-snaps-line', options: ['20', '24'] },
+          { id: 'type', label: 'Type / Finish', list: 'dl-hw-snaps-type',
+            options: ['Black (9mm)', 'Shiny Brass Plate', 'Gun Metal Matte', 'Shiny Nickel Plate',
+                      'Antique Brass Plate', 'Antique Nickel Plate', 'Antique Copper Plate', 'Themed'] }
+        ] },
+      { id: 'screw-posts',    label: 'Screw Posts',           fields: [
+          { id: 'color', label: 'Color', list: 'dl-hw-sp-color', options: ['Aluminum', 'Antique Brass', 'Bronze', 'Black'] },
+          { id: 'size',  label: 'Size',  list: 'dl-hw-sp-size',  options: ['1/8"', '3/16"', '1/4"', '3/8"', '1/2"', '5/8"'] }
+        ] },
+      { id: 'custom-hardware', label: 'Custom Hardware',      fields: [
+          { id: 'desc', label: 'Description' }
+        ] }
     ];
 
     /* Build a lookup map for quick access by id */
@@ -597,7 +649,9 @@
         var uid = 'hw-' + n + '-' + f.id;
         html +=
           '<div class="fl-wrap">' +
-            '<input type="text" class="fl-input hw-field hw-f-' + f.id + '" placeholder=" " id="' + uid + '" oninput="updateTierUI();">' +
+            '<input type="text" class="fl-input hw-field hw-f-' + f.id + '" placeholder=" " id="' + uid + '"' +
+            (f.list ? ' list="' + f.list + '"' : '') +
+            ' oninput="updateTierUI();">' +
             '<label class="fl-label" for="' + uid + '">' + f.label + '</label>' +
           '</div>';
       });
@@ -772,6 +826,125 @@
       if (card) card.remove();
       document.getElementById('add-'+type).disabled = false;
       updateTierUI();
+    }
+
+    /* =============================================================
+       HTML HELPERS
+    ============================================================= */
+    function escHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* Builds the card-style print view from a collected state object */
+    function buildPlannerPrintView(state) {
+      var html = '';
+      var orderQty = parseInt(state.orderQty) || 0;
+
+      /* ── Cover Materials ── */
+      var cms = (state.coverMaterials || []).filter(function(r) { return r.type; });
+      if (cms.length > 0) {
+        html += '<div class="band mixed">Cover Materials</div><div class="section"><div class="card-grid">';
+        cms.forEach(function(r) {
+          var typeLabel = r.type === 'leather' ? 'Leather'
+                        : r.type === 'bookcloth' ? 'Bookcloth'
+                        : escHtml(r.type);
+          html += '<div class="brow"><div class="btype">' + typeLabel + '</div>';
+          var pairs = r.type === 'leather'
+            ? [['Product Line', r.fields.productLine], ['Weight', r.fields.weight],
+               ['Color', r.fields.color], ['ID', r.fields.id]]
+            : [['Vendor', r.fields.vendor], ['Product Line', r.fields.productLine],
+               ['Color', r.fields.color], ['Decoration', r.fields.decoration]];
+          if (r.qty) pairs.push(['Qty', r.qty + (r.unit ? ' ' + r.unit : '')]);
+          var rows = pairs.filter(function(p) { return p[1]; }).map(function(p) {
+            return '<div class="spec-row"><span class="spec-label">' + escHtml(p[0]) +
+                   '</span><span class="spec-val">' + escHtml(p[1]) + '</span></div>';
+          }).join('');
+          if (rows) html += '<div class="specs-wrap">' + rows + '</div>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
+
+      /* ── Hardware & Components ── */
+      var hw = (state.plannerHardware || []).filter(function(h) { return h.type; });
+      if (hw.length > 0) {
+        html += '<div class="band mixed">Hardware &amp; Components</div><div class="section"><div class="card-grid">';
+        hw.forEach(function(ph) {
+          var conf = HW_CONFIG_MAP[ph.type] || { label: ph.type, fields: [] };
+          html += '<div class="brow"><div class="btype">' + escHtml(conf.label) + '</div>';
+          var pairs = [];
+          conf.fields.forEach(function(f) {
+            var val = (ph.fields || {})[f.id];
+            if (val) pairs.push([f.label, val]);
+          });
+          var rows = pairs.map(function(p) {
+            return '<div class="spec-row"><span class="spec-label">' + escHtml(p[0]) +
+                   '</span><span class="spec-val">' + escHtml(p[1]) + '</span></div>';
+          }).join('');
+          if (ph.qtyEa) {
+            var qtyEa = parseInt(ph.qtyEa) || 0;
+            var totalStr = (orderQty && qtyEa)
+              ? ' <span class="card-sub" style="display:inline;">(' + (orderQty * qtyEa) + ' total)</span>' : '';
+            rows += '<div class="spec-row"><span class="spec-label">Qty/ea</span>' +
+                    '<span class="spec-val">' + escHtml(ph.qtyEa) + totalStr + '</span></div>';
+          }
+          if (rows) html += '<div class="specs-wrap">' + rows + '</div>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
+
+      /* ── Production Departments ── */
+      var d = state.depts || {};
+      var DEPT_NAMES = {
+        deboss: 'Deboss', offset: 'Offset Print', flatbed: 'Flatbed Print',
+        sewing: 'Sewing', woodshop: 'Wood Shop', metal: 'Metal Shop'
+      };
+      var activeDepts = Object.keys(DEPT_NAMES).filter(function(k) { return d[k]; });
+      if (activeDepts.length > 0) {
+        html += '<div class="band mixed">Production Departments</div><div class="section"><div class="dept-grid">';
+        activeDepts.forEach(function(k) {
+          html += '<div class="dept-card"><div class="dept-title">' + DEPT_NAMES[k] + '</div>';
+          if (k === 'metal') {
+            html += '<div class="card-sub">' + (state.metalTippin ? 'Tip In Only' : 'Full') + '</div>';
+          }
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
+
+      /* ── Interior Components ── */
+      var ic = state.interior || {};
+      if (ic.cbInclude || ic.pocketsInclude || ic.tabsInclude) {
+        html += '<div class="band mixed">Interior Components</div><div class="section"><div class="card-grid">';
+        if (ic.cbInclude) {
+          html += '<div class="brow"><div class="btype">Corners</div>';
+          var cbDet = [ic.cbPanels ? ic.cbPanels + ' panels' : '',
+                       ic.cbType  ? (ic.cbType === 'std' ? 'Standard' : 'Non-Standard') : '']
+            .filter(Boolean).join(' · ');
+          if (cbDet) html += '<div class="detail-text">' + escHtml(cbDet) + '</div>';
+          html += '</div>';
+        }
+        if (ic.pocketsInclude) {
+          html += '<div class="brow"><div class="btype">Pockets</div>';
+          if (ic.pocketsType) html += '<div class="detail-text">' +
+            (ic.pocketsType === 'std' ? 'Standard' : 'Non-Standard') + '</div>';
+          html += '</div>';
+        }
+        if (ic.tabsInclude) {
+          html += '<div class="brow"><div class="btype">Tabs</div>';
+          var tabDet = [ic.tabsPanels ? ic.tabsPanels + ' panels' : '',
+                        ic.tabsType   ? (ic.tabsType === 'std' ? 'Standard' : 'Non-Standard') : '']
+            .filter(Boolean).join(' · ');
+          if (tabDet) html += '<div class="detail-text">' + escHtml(tabDet) + '</div>';
+          html += '</div>';
+        }
+        html += '</div></div>';
+      }
+
+      return html;
     }
 
     /* =============================================================
@@ -1157,6 +1330,9 @@
       var dateStr = (now.getMonth()+1) + '/' + now.getDate() + '/' + String(now.getFullYear()).slice(2);
       document.getElementById('print-stage-banner').textContent = 'PLANNED — ' + dateStr;
 
+      /* Inject card-style print view */
+      document.getElementById('planner-print-view').innerHTML = buildPlannerPrintView(state);
+
       /* Set document title → becomes the default PDF filename */
       var origTitle = document.title;
       document.title = state.jobOrder + ' Preproduction Planned';
@@ -1166,6 +1342,7 @@
         document.getElementById('stateEmbed').textContent = '';
         document.getElementById('print-date').textContent = '';
         document.getElementById('print-stage-banner').textContent = '';
+        document.getElementById('planner-print-view').innerHTML = '';
         window.removeEventListener('afterprint', onAP);
         /* Remove exported draft and start fresh */
         if (CURRENT_PLANNER_JOB) removePlannerJob(CURRENT_PLANNER_JOB);
@@ -1195,21 +1372,25 @@
     /* Show any saved drafts from a previous session */
     renderPlannerChips();
 
-    /* Build datalists for all cover material autocomplete fields */
+    /* Build datalists for all cover material and hardware autocomplete fields */
     (function() {
       var seen = {};
+      function buildDatalist(f) {
+        if (f.list && f.options && !seen[f.list]) {
+          seen[f.list] = true;
+          var dl = document.createElement('datalist');
+          dl.id = f.list;
+          f.options.forEach(function(v) {
+            var o = document.createElement('option'); o.value = v; dl.appendChild(o);
+          });
+          document.body.appendChild(dl);
+        }
+      }
       Object.values(COVER_MATERIAL_TYPES).forEach(function(def) {
-        def.fields.forEach(function(f) {
-          if (f.list && f.options && !seen[f.list]) {
-            seen[f.list] = true;
-            var dl = document.createElement('datalist');
-            dl.id = f.list;
-            f.options.forEach(function(v) {
-              var o = document.createElement('option'); o.value = v; dl.appendChild(o);
-            });
-            document.body.appendChild(dl);
-          }
-        });
+        def.fields.forEach(buildDatalist);
+      });
+      HW_PLANNER_CONFIG.forEach(function(hw) {
+        hw.fields.forEach(buildDatalist);
       });
     })();
   </script>

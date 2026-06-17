@@ -506,3 +506,33 @@ body {
   transition: background .15s;
 }
 .back-link:hover { background: rgba(0,0,0,.06); color: var(--gray-700); }
+
+/* ── SPECS BLOCK ────────────────────────────────────────────── */
+/* Shared by coordinator cards and planner print view           */
+.specs-wrap {
+  border: 1px solid var(--gray-75);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.specs-head {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--section-label);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Sub-label beneath a card title (e.g. metal scope, total qty) */
+.card-sub {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 3px;
+}
+
+/* Inline detail text inside an interior card */
+.detail-text {
+  font-size: 11px;
+  color: var(--section-label);
+}

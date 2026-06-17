@@ -285,32 +285,6 @@
       margin: 6px 0;
     }
 
-    /* ── UPLOAD ZONE ── */
-    #upload-zone {
-      width: 11in;
-      margin: 40px auto;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
-      padding: 64px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #upload-zone h2 {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--ink);
-      margin: 0 0 8px;
-      letter-spacing: .03em;
-    }
-
-    #upload-zone p {
-      color: var(--gray-400);
-      font-size: 12px;
-    }
-
     /* Full-page drag highlight */
     body.page-dragover::after {
       content: '';
@@ -322,44 +296,44 @@
       z-index: 9999;
     }
 
-    /* ── IMPORT LABEL ── */
-    .import-label {
-      display: inline-flex;
+    /* ── ACTIVE JOBS BAR ── */
+    #active-jobs-bar {
+      display: none; /* shown by renderActiveJobs when jobs exist */
+      width: 11in;
+      margin: 0 auto;
+      padding: 6px 0;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--section-label);
-      background: var(--section-bg);
-      border: 1.5px solid var(--section-label);
-      border-radius: 5px;
-      padding: 5px 10px;
-      cursor: pointer;
-      transition: filter .15s;
+      gap: 4px;
+      flex-wrap: wrap;
     }
 
-    .import-label:hover {
-      filter: brightness(.95);
-    }
-
-    /* ── ACTIVE JOBS PANEL ── */
-    #active-jobs-panel {
-      margin-top: 28px;
-      text-align: left;
-    }
-
-    #active-jobs-panel h3 {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--gray-300);
-      margin: 0 0 10px;
-    }
-
-    #active-jobs-list{
-      display: flex;
+    #active-jobs-bar-list {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
       gap: 8px;
+    }
+
+    /* ── SHEET EMPTY STATE ── */
+    #sheet-empty-state {
+      padding: 64px 0;
+      text-align: center;
+      color: var(--gray-300);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      justify-content: center;
+    }
+
+    #sheet-empty-state i {
+      font-size: 36px;
+      margin: auto;
+      display: block;
+    }
+
+    #sheet-empty-state p {
+      font-size: 12px;
+      margin: 0;
     }
 
     .job-chip {
@@ -379,6 +353,10 @@
       background: var(--section-bg);
       border-color: var(--section-label);
     }
+
+    .job-chip.active  { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .job-chip.active:hover { background: var(--gray-700); border-color: var(--gray-700); }
+    .job-chip.active .job-chip-phase { background: rgba(255,255,255,.18); color: #fff; }
 
     .job-chip-id {
       font-weight: 700;
@@ -628,10 +606,18 @@
 
       /* Remove screen chrome */
       #main-toolbar,
-      #upload-zone,
+      #active-jobs-bar,
+      #sheet-empty-state,
       .phase-bar,
       #review-override-banner {
         display: none !important;
+      }
+
+      /* Title bar: white background, dark text */
+      .title {
+        background-color: white !important;
+        color: black !important;
+        padding-bottom: 0;
       }
 
       /* Sheet: no shadow, no margin */
@@ -729,49 +715,41 @@
       <span class="mode-pill">Coordinator Mode</span>
     </div>
     <div class="toolbar-right">
-      <span style="font-size:10px; color:var(--gray-300); font-style:italic;">Drop a saved sheet anywhere to reload
-        it</span>
       <span class="status-msg" id="export-status"></span>
-      <!-- Phase 1 button -->
+      <input type="file" id="pdf-upload-input" accept=".pdf" style="display:none" onchange="handlePDFUpload(this)">
+      <button class="btn btn-gray btn-sm" onclick="document.getElementById('pdf-upload-input').click()">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i> Open File
+      </button>
       <button class="btn btn-green" id="btn-save-reviewed" onclick="doSaveReviewed()" style="display:none;">
         Save Reviewed PDF <i class="fa-solid fa-chevron-right"></i>
       </button>
-      <!-- Phase 3 button -->
       <button class="btn btn-gold" id="btn-save-approved" onclick="doSaveApproved()" style="display:none;" disabled>
         Save Approved PDF <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
   </div>
 
-  <!-- ===== UPLOAD ZONE (shown before a PDF is loaded) ===== -->
-  <div id="upload-zone">
-    <h2>Coordinator — Preproduction Review</h2>
-    <p>Drop a <strong>planned PDF</strong> or <strong>reviewed PDF</strong> anywhere on the page to load it, or resume
-      an active job below.</p>
-    <p>
-      <a href="#" onclick="document.getElementById('pdf-upload-input').click(); return false;" class="btn btn-gray"
-        style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; letter-spacing:.03em; text-transform:uppercase;">
-        <i class="fa-solid fa-arrow-up-from-bracket"></i> Browse for a file
-      </a>
-    </p>
-    <input type="file" id="pdf-upload-input" accept=".pdf" style="display:none" onchange="handlePDFUpload(this)">
-
-    <div id="active-jobs-panel" style="display:none;">
-      <h3>Your Active Jobs</h3>
-      <div id="active-jobs-list"></div>
-    </div>
-
-    <div id="upload-error"
-      style="display:none; margin-top:14px; font-size:11px; color:var(--tier-t4-text); font-weight:600;"></div>
+  <!-- ===== ACTIVE JOBS BAR ===== -->
+  <div id="active-jobs-bar">
+    <div id="active-jobs-bar-list"></div>
   </div>
 
-  <!-- ===== SHEET (hidden until PDF loaded) ===== -->
-  <div class="sheet" id="main-sheet" style="display:none;">
+  <!-- ===== SHEET (always visible) ===== -->
+  <div class="sheet" id="main-sheet">
     <!-- TITLE BAR -->
     <div class="title">
       <span>Preproduction Materials List</span>
       <div id="print-stage-banner" class="print-stage-banner"></div>
     </div>
+
+    <!-- Empty state (shown when no job is loaded) -->
+    <div id="sheet-empty-state">
+      <i class="fa-regular fa-file-pdf"></i>
+      <p>Drop a planned or reviewed PDF anywhere on the page,<br>or use <strong>Open File</strong> above to get started.</p>
+    </div>
+
+    <!-- Job content (hidden until a PDF is loaded) -->
+    <div id="sheet-job-content" style="display:none;">
 
     <!-- Phase bar -->
     <div class="phase-bar" id="phase-bar">
@@ -837,12 +815,9 @@
               <option value="ordered-in-stock">Ordered — in-stock at vendor</option>
               <option value="not-in-stock">Ordered — NOT yet in-stock</option>
             </select>
-            <div id="leather-specs-display"
-              style="display:none; background:var(--section-bg); border-radius:4px; padding:8px 10px;">
-              <div
-                style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">
-                Material Specs</div>
-              <div id="leather-specs-rows" style="font-size:11px; color:var(--section-label);"></div>
+            <div id="leather-specs-display" class="specs-wrap" style="display:none;">
+              <div class="specs-head">Material Specs</div>
+              <div id="leather-specs-rows"></div>
             </div>
           </div>
 
@@ -857,11 +832,9 @@
               <option value="not-in-stock">Ordered — NOT yet in-stock</option>
             </select>
             <!-- P1 specs — read-only -->
-            <div style="background:var(--section-bg); border-radius:4px; padding:8px 10px;">
-              <div
-                style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">
-                Material Specs</div>
-              <div id="fabric-specs-display" style="font-size:11px; color:var(--section-label);"></div>
+            <div class="specs-wrap">
+              <div class="specs-head">Material Specs</div>
+              <div id="fabric-specs-display"></div>
             </div>
           </div>
 
@@ -905,7 +878,7 @@
 
           <div class="dept-card" id="dept-card-metal" style="display:none;">
             <div class="dept-title">Metal Shop</div>
-            <div id="metal-scope-display" style="font-size:11px; color:var(--gray-400); margin-top:3px;"></div>
+            <div id="metal-scope-display" class="card-sub"></div>
           </div>
 
         </div>
@@ -919,11 +892,11 @@
         <div class="card-grid">
           <div class="brow" id="interior-row-cb" style="display:none;">
             <div class="btype">Corners</div>
-            <span id="cb-details-display" style="font-size:11px; color:var(--section-label);"></span>
+            <span id="cb-details-display" class="detail-text"></span>
           </div>
           <div class="brow" id="interior-row-pockets" style="display:none;">
             <div class="btype">Pockets</div>
-            <span id="pockets-details-display" style="font-size:11px; color:var(--section-label);"></span>
+            <span id="pockets-details-display" class="detail-text"></span>
           </div>
           <div class="brow" id="interior-row-tabs" style="display:none;">
             <div class="btype">Tabs</div>
@@ -994,6 +967,7 @@
       </div>
 
     </div><!-- /.body -->
+    </div><!-- /#sheet-job-content -->
     <div id="stateEmbed"></div>
   </div><!-- /.sheet -->
 
@@ -1028,19 +1002,19 @@
 
     /* ── V4 hardware config (mirrors planner's HW_PLANNER_CONFIG) ── */
     var HW_PLANNER_CONFIG = [
-      { id: 'magnets', label: 'Magnets', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
-      { id: 'elastic-cords', label: 'Elastic Cords / Loops', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
-      { id: 'eyelets', label: 'Eyelets', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }] },
-      { id: 'o-rings', label: 'O-Rings', fields: [{ id: 'desc', label: 'Description' }] },
-      { id: 'ring-binder', label: 'Ring Binder', fields: [{ id: 'rings', label: '# of Rings' }, { id: 'color', label: 'Color' }, { id: 'size', label: 'Description / Size' }] },
-      { id: 'bands', label: 'Bands', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }] },
-      { id: 'clips', label: 'Clips', fields: [{ id: 'color', label: 'Color' }] },
-      { id: 'romark', label: 'Romark', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }, { id: 'thickness', label: 'Thickness' }] },
-      { id: 'rivets', label: 'Rivets', fields: [{ id: 'desc', label: 'Description' }] },
-      { id: 'plastic-sleeves', label: 'Plastic Sleeves', fields: [{ id: 'type', label: 'Type / Size' }] },
-      { id: 'snaps', label: 'Snaps', fields: [{ id: 'line', label: 'Line' }, { id: 'type', label: 'Type' }] },
-      { id: 'screw-posts', label: 'Screw Posts', fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
-      { id: 'custom-hardware', label: 'Custom Hardware', fields: [{ id: 'desc', label: 'Description' }] }
+      { id: 'magnets',         label: 'Magnets',               fields: [{ id: 'desc',  label: 'Description' }] },
+      { id: 'elastic-cords',   label: 'Elastic Cords / Loops', fields: [{ id: 'color', label: 'Color' }, { id: 'style', label: 'Style' }, { id: 'length', label: 'Length' }] },
+      { id: 'eyelets',         label: 'Eyelets',               fields: [{ id: 'size',  label: 'Size' }, { id: 'color', label: 'Color' }] },
+      { id: 'o-rings',         label: 'O-Rings',               fields: [{ id: 'desc',  label: 'Description' }] },
+      { id: 'ring-binder',     label: 'Ring Binder',           fields: [{ id: 'model', label: 'Model' }] },
+      { id: 'bands',           label: 'Bands',                 fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
+      { id: 'clips',           label: 'Clips',                 fields: [{ id: 'color', label: 'Color' }] },
+      { id: 'romark',          label: 'Rowmark',               fields: [{ id: 'size',  label: 'Size' }, { id: 'color', label: 'Color' }, { id: 'thickness', label: 'Thickness' }] },
+      { id: 'rivets',          label: 'Rivets',                fields: [{ id: 'desc',  label: 'Description' }] },
+      { id: 'plastic-sleeves', label: 'Plastic Sleeves',       fields: [{ id: 'type',  label: 'Type / Size' }] },
+      { id: 'snaps',           label: 'Snaps',                 fields: [{ id: 'line',  label: 'Line' }, { id: 'type', label: 'Type / Finish' }] },
+      { id: 'screw-posts',     label: 'Screw Posts',           fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
+      { id: 'custom-hardware', label: 'Custom Hardware',       fields: [{ id: 'desc',  label: 'Description' }] }
     ];
     var HW_CONFIG_MAP = {};
     HW_PLANNER_CONFIG.forEach(function (h) { HW_CONFIG_MAP[h.id] = h; });
@@ -1068,11 +1042,11 @@
     ============================================================= */
     function renderActiveJobs() {
       var ids = getActiveJobIds();
-      var panel = document.getElementById('active-jobs-panel');
-      var list = document.getElementById('active-jobs-list');
+      var panel = document.getElementById('active-jobs-bar');
+      var list = document.getElementById('active-jobs-bar-list');
       list.innerHTML = '';
       if (ids.length === 0) { panel.style.display = 'none'; return; }
-      panel.style.display = '';
+      panel.style.display = 'flex';
       ids.forEach(function (id) {
         var s = loadJobState(id);
         if (!s) return;
@@ -1083,6 +1057,7 @@
         chip.className = 'job-chip';
         chip.innerHTML = '<span class="job-chip-id">' + id + '</span>' +
           '<span class="job-chip-phase ' + pClass + '">' + pLabel + '</span>';
+        if (id === CURRENT_JOB_ID) chip.classList.add('active');
         chip.onclick = function () { loadFromLocalStorage(id); };
         list.appendChild(chip);
       });
@@ -1140,13 +1115,9 @@
     }
 
     function showUploadError(msg) {
-      var el = document.getElementById('upload-error');
-      el.textContent = '⚠ ' + msg;
-      el.style.display = '';
+      showStatus('⚠ ' + msg, 'warn');
     }
-    function clearUploadError() {
-      document.getElementById('upload-error').style.display = 'none';
-    }
+    function clearUploadError() { /* noop — showStatus auto-clears */ }
 
     /* =============================================================
        LOAD FROM LOCALSTORAGE
@@ -1171,9 +1142,9 @@
         renderActiveJobs();
       }
 
-      /* Hide upload zone, show sheet */
-      document.getElementById('upload-zone').style.display = 'none';
-      document.getElementById('main-sheet').style.display = '';
+      /* Show job content, hide empty state */
+      document.getElementById('sheet-empty-state').style.display = 'none';
+      document.getElementById('sheet-job-content').style.display = '';
 
       /* ── Header fields ── */
       document.getElementById('job-order').value = state.jobOrder || '';
@@ -1436,9 +1407,9 @@
 
         /* Spec fields + qty info in a read-only specs block */
         var specsWrap = document.createElement('div');
-        specsWrap.style.cssText = 'background:var(--section-bg); border-radius:4px; padding:8px 10px;';
+        specsWrap.className = 'specs-wrap';
         var specsHead = document.createElement('div');
-        specsHead.style.cssText = 'font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;';
+        specsHead.className = 'specs-head';
         specsHead.textContent = 'Specs';
         specsWrap.appendChild(specsHead);
 
@@ -1620,8 +1591,7 @@ function escHtml(s) {
 
       /* ── Buttons ── */
       document.getElementById('btn-save-reviewed').style.display = showForm ? '' : 'none';
-      document.getElementById('btn-save-approved').style.display =
-        (!showForm && phase >= 2 && allDone) ? '' : 'none';
+      document.getElementById('btn-save-approved').style.display = (!showForm && phase >= 2 && allDone) ? '' : 'none';
     }
 
     /* =============================================================
@@ -1789,8 +1759,10 @@ function escHtml(s) {
         CURRENT_STATE = null;
         CURRENT_JOB_ID = null;
         CURRENT_PHASE = 1;
-        document.getElementById('main-sheet').style.display = 'none';
-        document.getElementById('upload-zone').style.display = '';
+        document.getElementById('sheet-job-content').style.display = 'none';
+        document.getElementById('sheet-empty-state').style.display = '';
+        document.getElementById('btn-save-reviewed').style.display = 'none';
+        document.getElementById('btn-save-approved').style.display = 'none';
         renderActiveJobs();
         showStatus('<i class="fa-solid fa-check"></i> Approved PDF saved — job is authorized for production', 'ok');
       });
