@@ -35,33 +35,39 @@
       text-transform: uppercase;
       color: var(--gray-300);
       padding: 0 6px 5px;
-      border-bottom: 1px solid var(--gray-100);
       white-space: nowrap;
     }
     .mat-table td {
-      padding: 4px 6px;
+      padding: 5px 6px;
       vertical-align: middle;
-      border-bottom: 1px solid var(--gray-50);
+      border-bottom: 1px solid var(--gray-75);
     }
     .mat-row:last-child td { border-bottom: none; }
     .col-type  { width: 130px; }
-    .col-qty   { width: 64px; }
+    .col-qty   { width: 68px; }
     .col-unit  { width: 88px; }
     .col-rm    { width: 26px; }
-    .mat-type-select { width: 100%; }
+    .mat-type-select { width: 100%; height: 26px; }
     .mat-qty { width: 100%; height: 26px; text-align: right; }
-    .mat-unit { width: 100%; }
+    .mat-unit { width: 100%; height: 26px; }
     .fields-cell {
       display: flex;
-      gap: 6px;
-      align-items: flex-end;
+      align-items: center;
+      gap: 4px;
     }
-    .fields-cell .fl-wrap { flex: 1; min-width: 70px; }
+    .fields-cell .fl-wrap { flex: 1; min-width: 60px; }
     .fields-empty {
+      height: 26px;
+      border: 1.5px solid var(--gray-75);
+      border-radius: 2px;
+      background: var(--gray-10);
+      padding: 0 7px;
+      display: flex;
+      align-items: center;
       font-size: 11px;
       color: var(--gray-200);
-      font-style: italic;
-      padding: 6px 0;
+      font-style: normal;
+      flex: 1;
     }
 
     /* ── DEPARTMENT TOGGLE (active state) ── */
@@ -85,7 +91,7 @@
     /* ── ACTIVE DRAFTS PANEL ── */
     #planner-active-jobs {
       display: none;
-      width: 11in;
+      width: 8.5in;
       margin: auto;
       align-items: center;
       gap: 4px;
@@ -127,10 +133,12 @@
     #stateEmbed { display: none; }
     .print-date { display: none; }
     .print-stage-banner { display: none; }
+    .print-job-num { display: none; }
+    .title-right { display: none; }
 
     /* ── @media print ──────────────────────────────────── */
     @media print {
-      @page { size: 11in 17in; margin: 0; }
+      @page { size: 8.5in 11in; margin: 0; }
 
       /* Force colour accuracy */
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -152,10 +160,52 @@
       /* Sheet: no shadow, no margin */
       .sheet { box-shadow: none !important; margin: 0 !important; }
 
-      .title{
+      .title {
         background-color: white !important;
         padding-bottom: 0;
         color: black;
+      }
+
+      /* Job num + stage pill stacked in title-right */
+      .title-right {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+      .print-job-num {
+        display: block !important;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        color: black;
+      }
+
+      /* Job Order # field hidden (shown in title instead) */
+      #job-order-wrap { display: none !important; }
+
+      /* Order Qty / Date Received: horizontal label: value */
+      #job-details-row .input-wrap {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 3px;
+      }
+      #job-details-row .lab {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--section-label);
+        white-space: nowrap;
+      }
+      #job-details-row .lab::after { content: ':'; }
+      #job-details-row .box,
+      #job-details-row .print-date {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        width: auto !important;
+        font-size: 12px;
       }
 
       /* ── Inputs → plain text ── */
@@ -287,14 +337,17 @@
     <!-- TITLE BAR -->
     <div class="title">
       <span>Preproduction Materials List</span>
-      <div id="print-stage-banner" class="print-stage-banner"></div>
+      <div class="title-right">
+        <span class="print-job-num" id="print-job-num"></span>
+        <div id="print-stage-banner" class="print-stage-banner"></div>
+      </div>
     </div>
 
     <div class="body">
 
       <!-- JOB DETAILS ROW -->
-      <div class="frow" style="margin: 10px 0 4px; align-items:flex-end;">
-        <div class="input-wrap">
+      <div class="frow" id="job-details-row" style="margin: 10px 0 4px; align-items:flex-end;">
+        <div class="input-wrap" id="job-order-wrap">
           <span class="lab">Job Order #</span>
           <input type="text" class="box" id="job-order" inputmode="numeric" maxlength="6"
                  placeholder="000000" style="width:100px;"
@@ -490,10 +543,9 @@
         var uid = 'cov-' + n + '-' + f.id;
         html +=
           '<div class="fl-wrap">' +
-            '<input type="text" class="fl-input cov-field cov-f-' + f.id + '" placeholder=" " id="' + uid + '"' +
+            '<input type="text" class="fl-input cov-field cov-f-' + f.id + '" placeholder="' + f.label + '" id="' + uid + '"' +
             (f.list ? ' list="' + f.list + '"' : '') +
             ' oninput="updateTierUI();">' +
-            '<label class="fl-label" for="' + uid + '">' + f.label + '</label>' +
           '</div>';
       });
       html += '</div>';
@@ -649,10 +701,9 @@
         var uid = 'hw-' + n + '-' + f.id;
         html +=
           '<div class="fl-wrap">' +
-            '<input type="text" class="fl-input hw-field hw-f-' + f.id + '" placeholder=" " id="' + uid + '"' +
+            '<input type="text" class="fl-input hw-field hw-f-' + f.id + '" placeholder="' + f.label + '" id="' + uid + '"' +
             (f.list ? ' list="' + f.list + '"' : '') +
             ' oninput="updateTierUI();">' +
-            '<label class="fl-label" for="' + uid + '">' + f.label + '</label>' +
           '</div>';
       });
       html += '</div>';
@@ -1325,6 +1376,9 @@
       var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       document.getElementById('stateEmbed').textContent = '%%CS%%' + b64 + '%%CS%%';
 
+      /* Job number in title */
+      document.getElementById('print-job-num').textContent = state.jobOrder || '';
+
       /* Stage banner */
       var now = new Date();
       var dateStr = (now.getMonth()+1) + '/' + now.getDate() + '/' + String(now.getFullYear()).slice(2);
@@ -1341,6 +1395,7 @@
         document.title = origTitle;
         document.getElementById('stateEmbed').textContent = '';
         document.getElementById('print-date').textContent = '';
+        document.getElementById('print-job-num').textContent = '';
         document.getElementById('print-stage-banner').textContent = '';
         document.getElementById('planner-print-view').innerHTML = '';
         window.removeEventListener('afterprint', onAP);

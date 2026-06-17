@@ -252,38 +252,7 @@
       border-bottom: 1.5px solid var(--ink);
     }
 
-    /* ── SPEC ROWS ── */
-    .spec-row {
-      display: flex;
-      gap: 10px;
-      align-items: baseline;
-      font-size: 11px;
-      line-height: 1.6;
-    }
-
-    .spec-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--gray-300);
-      flex-shrink: 0;
-    }
-
-    .spec-label::after {
-      content: ':';
-      margin-right: 2px;
-    }
-
-    .spec-val {
-      color: var(--ink);
-    }
-
-    .spec-divider {
-      border: none;
-      border-top: 1px solid var(--gray-50);
-      margin: 6px 0;
-    }
+    /* spec-row / spec-label / spec-val / spec-divider → shared.css */
 
     /* Full-page drag highlight */
     body.page-dragover::after {
@@ -299,7 +268,7 @@
     /* ── ACTIVE JOBS BAR ── */
     #active-jobs-bar {
       display: none; /* shown by renderActiveJobs when jobs exist */
-      width: 11in;
+      width: 8.5in;
       margin: 0 auto;
       padding: 6px 0;
       align-items: center;
@@ -580,18 +549,15 @@
     }
 
     /* ── SCREEN: hide print-only elements ── */
-    #stateEmbed {
-      display: none;
-    }
-
-    .print-stage-banner {
-      display: none;
-    }
+    #stateEmbed { display: none; }
+    .print-stage-banner { display: none; }
+    .print-job-num { display: none; }
+    .title-right { display: none; }
 
     /* ── @media print ──────────────────────────────────── */
     @media print {
       @page {
-        size: 11in 17in;
+        size: 8.5in 11in;
         margin: 0;
       }
 
@@ -618,6 +584,47 @@
         background-color: white !important;
         color: black !important;
         padding-bottom: 0;
+      }
+
+      /* Job num + stage pill stacked in title-right */
+      .title-right {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+      .print-job-num {
+        display: block !important;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        color: black;
+      }
+
+      /* Job Order # field hidden (shown in title instead) */
+      #job-order-wrap { display: none !important; }
+
+      /* Order Qty / Date Received: horizontal label: value */
+      #job-details-row .input-wrap {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 3px;
+      }
+      #job-details-row .lab {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--section-label);
+        white-space: nowrap;
+      }
+      #job-details-row .lab::after { content: ':'; }
+      #job-details-row .box {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        width: auto !important;
+        font-size: 12px;
       }
 
       /* Sheet: no shadow, no margin */
@@ -739,7 +746,10 @@
     <!-- TITLE BAR -->
     <div class="title">
       <span>Preproduction Materials List</span>
-      <div id="print-stage-banner" class="print-stage-banner"></div>
+      <div class="title-right">
+        <span class="print-job-num" id="print-job-num"></span>
+        <div id="print-stage-banner" class="print-stage-banner"></div>
+      </div>
     </div>
 
     <!-- Empty state (shown when no job is loaded) -->
@@ -775,8 +785,8 @@
     <div class="body">
 
       <!-- JOB DETAILS ROW -->
-      <div class="frow" style="margin: 10px 0 4px; align-items:flex-end;">
-        <div class="input-wrap p1-field p1-lock">
+      <div class="frow" id="job-details-row" style="margin: 10px 0 4px; align-items:flex-end;">
+        <div class="input-wrap p1-field p1-lock" id="job-order-wrap">
           <span class="lab">Job Order #</span>
           <input type="text" class="box" id="job-order" readonly style="width:100px;">
         </div>
@@ -1684,6 +1694,9 @@ function escHtml(s) {
       var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       document.getElementById('stateEmbed').textContent = '%%CS%%' + b64 + '%%CS%%';
 
+      /* Job number in title */
+      document.getElementById('print-job-num').textContent = state.jobOrder || '';
+
       /* Stage banner */
       var banner = document.getElementById('print-stage-banner');
       banner.textContent = 'REVIEWED — ' + shortDate();
@@ -1698,6 +1711,7 @@ function escHtml(s) {
       window.addEventListener('afterprint', function onAP() {
         document.title = origTitle;
         document.getElementById('stateEmbed').textContent = '';
+        document.getElementById('print-job-num').textContent = '';
         banner.textContent = '';
         btn.disabled = false;
         btn.innerHTML = 'Save Reviewed PDF <i class="fa-solid fa-chevron-right"></i>';
@@ -1735,6 +1749,9 @@ function escHtml(s) {
       var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       document.getElementById('stateEmbed').textContent = '%%CS%%' + b64 + '%%CS%%';
 
+      /* Job number in title */
+      document.getElementById('print-job-num').textContent = state.jobOrder || '';
+
       /* Stage banner */
       var banner = document.getElementById('print-stage-banner');
       banner.textContent = 'APPROVED — ' + shortDate();
@@ -1749,6 +1766,7 @@ function escHtml(s) {
       window.addEventListener('afterprint', function onAP() {
         document.title = origTitle;
         document.getElementById('stateEmbed').textContent = '';
+        document.getElementById('print-job-num').textContent = '';
         banner.textContent = '';
         btn.disabled = false;
         btn.innerHTML = 'Save Approved PDF <i class="fa-solid fa-chevron-right"></i>';
