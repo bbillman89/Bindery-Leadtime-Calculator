@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,10 +8,15 @@
   <script src="https://kit.fontawesome.com/da08280601.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="shared.css">
   <style>
-    body { font-size: 12px; }
+    body {
+      font-size: 12px;
+    }
 
     /* ── COORDINATOR MODE PILL (override shared gray default) ── */
-    .mode-pill { background: var(--section-band); color: var(--section-label); }
+    .mode-pill {
+      background: var(--section-band);
+      color: var(--section-label);
+    }
 
     /* ── P1 LOCKED FIELDS ── */
     .p1-lock .box,
@@ -21,15 +27,30 @@
       pointer-events: none;
       color: var(--section-label);
     }
+
     .p1-lock input[type=checkbox],
-    .p1-lock input[type=radio] { pointer-events: none; opacity: .6; }
+    .p1-lock input[type=radio] {
+      pointer-events: none;
+      opacity: .6;
+    }
 
     .p1-field .box,
-    .p1-field select.box { background: var(--section-bg); }
+    .p1-field select.box {
+      background: var(--section-bg);
+    }
+
     .p2-field .box,
-    .p2-field select.box { background: var(--section-bg); }
-    .p1-field .lab       { color: var(--section-label); }
-    .p2-field .lab       { color: var(--section-label); }
+    .p2-field select.box {
+      background: var(--section-bg);
+    }
+
+    .p1-field .lab {
+      color: var(--section-label);
+    }
+
+    .p2-field .lab {
+      color: var(--section-label);
+    }
 
     /* ── CALC VALUE DISPLAY ── */
     .calc-value {
@@ -47,16 +68,30 @@
     }
 
     /* ── COPT: coordinator uses p2 accent by default ── */
-    .copt:hover        { background: color-mix(in srgb, var(--section-label) 15%, #fff); border-color: var(--section-label); }
-    .copt input        { accent-color: var(--section-label); }
+    .copt:hover {
+      background: color-mix(in srgb, var(--section-label) 15%, #fff);
+      border-color: var(--section-label);
+    }
+
+    .copt input {
+      accent-color: var(--section-label);
+    }
+
     /* p1-style variant reverts to gold */
-    .copt.p1-style:hover { background: color-mix(in srgb, var(--gold) 15%, #fff); border-color: var(--gold); }
-    .copt.p1-style input { accent-color: var(--ink); }
+    .copt.p1-style:hover {
+      background: color-mix(in srgb, var(--gold) 15%, #fff);
+      border-color: var(--gold);
+    }
+
+    .copt.p1-style input {
+      accent-color: var(--ink);
+    }
 
     /* ── CARD STATUS VARIANTS ── */
-    .brow.hw-bad  { background: var(--tier-t4-bg); border-color: var(--tier-t4-border); }
-    .brow.hw-warn { background: var(--tier-t3-bg); border-color: var(--tier-t3-border); }
-    .cover-card   { grid-column: 1 / -1; }
+
+    .cover-card {
+      grid-column: 1 / -1;
+    }
 
     /* ── NOTEBOX (locked in coordinator) ── */
     .notebox {
@@ -66,221 +101,548 @@
     }
 
     /* ── DUE DATE BOX sizing (coordinator variant — narrower) ── */
-    .due-date-box { min-width: 120px; }
-    .due-date-value { font-size: 20px; }
-    .due-date-label { margin-bottom: 5px; }
+    .due-date-box {
+      min-width: 120px;
+    }
+
+    .due-date-value {
+      font-size: 20px;
+    }
+
+    .due-date-label {
+      margin-bottom: 5px;
+    }
 
     /* ── HARDWARE TABLE ── */
-    .hw-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .hw-table th {
-      font-size: 10px; font-weight: 700; letter-spacing: .04em;
-      text-transform: uppercase; padding: 4px 8px;
-      border-bottom: 1px solid var(--line); text-align: left;
+    .hw-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
-    .hw-table th.th-p1 { background: var(--section-band);  color: var(--gray-700); }
-    .hw-table th.th-p2 { background: var(--section-band);  color: var(--section-label); }
-    .hw-table td { padding: 3px 6px; border-bottom: 1px solid #efefef; vertical-align: middle; }
-    .hw-table tr.inactive td { opacity: .4; }
+
+    .hw-table th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .hw-table th.th-p1 {
+      background: var(--section-band);
+      color: var(--gray-700);
+    }
+
+    .hw-table th.th-p2 {
+      background: var(--section-band);
+      color: var(--section-label);
+    }
+
+    .hw-table td {
+      padding: 3px 6px;
+      border-bottom: 1px solid #efefef;
+      vertical-align: middle;
+    }
+
+    .hw-table tr.inactive td {
+      opacity: .4;
+    }
+
     .hw-table tr.inactive td:not(:first-child) input,
-    .hw-table tr.inactive td:not(:first-child) select { pointer-events: none; }
+    .hw-table tr.inactive td:not(:first-child) select {
+      pointer-events: none;
+    }
+
     .hw-table input[type="text"],
     .hw-table select {
-      border: 1.5px solid transparent; background: transparent;
-      padding: 2px 5px; font: inherit; font-size: 11px; border-radius: 3px;
-      width: 100%; transition: border-color .15s, background-color .15s;
+      border: 1.5px solid transparent;
+      background: transparent;
+      padding: 2px 5px;
+      font: inherit;
+      font-size: 11px;
+      border-radius: 3px;
+      width: 100%;
+      transition: border-color .15s, background-color .15s;
     }
+
     .hw-table td.td-p1 input[type="text"] {
-      background: var(--section-bg) !important; pointer-events: none; color: var(--section-label);
+      background: var(--section-bg) !important;
+      pointer-events: none;
+      color: var(--section-label);
     }
-    .hw-table tr.active td.td-p2 select:hover { border-color: var(--section-label); }
+
+    .hw-table tr.active td.td-p2 select:hover {
+      border-color: var(--section-label);
+    }
+
     .hw-table tr.active td.td-p2 select:focus {
-      outline: none; background: var(--section-bg);
+      outline: none;
+      background: var(--section-bg);
       border-color: var(--section-label);
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--section-label) 20%, transparent);
     }
-    .hw-table tr.status-bad  { background: var(--tier-t4-bg); }
-    .hw-table tr.status-warn { background: var(--tier-t3-bg); }
 
-    .hw-det { display: flex; }
-    .hw-det input[type="text"] {
-      flex: 1; min-width: 40px;
-      border-right: 1px solid var(--gray-50) !important; border-radius: 0 !important;
+    .hw-table tr.status-bad {
+      background: var(--tier-t4-bg);
     }
-    .hw-det input[type="text"]:last-child { border-right: none !important; }
+
+    .hw-table tr.status-warn {
+      background: var(--tier-t3-bg);
+    }
+
+    .hw-det {
+      display: flex;
+    }
+
+    .hw-det input[type="text"] {
+      flex: 1;
+      min-width: 40px;
+      border-right: 1px solid var(--gray-50) !important;
+      border-radius: 0 !important;
+    }
+
+    .hw-det input[type="text"]:last-child {
+      border-right: none !important;
+    }
 
     /* ── DEPT GRID ── */
-    .dept-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-    .dept-card {
-      border: 1px solid var(--gray-75); border-radius: 5px; padding: 7px 12px;
-      background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    .dept-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0;
     }
+
+    .dept-card {
+      border: 1px solid var(--gray-75);
+      border-radius: 5px;
+      padding: 7px 12px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
     .dept-title {
-      font-size: 10px; font-weight: 700; letter-spacing: .06em;
-      text-transform: uppercase; color: var(--gold-dark);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
     }
 
     /* ── SIGN-OFF ── */
-    .signoff-row      { display: flex; gap: 28px; align-items: flex-end; margin-top: 10px; }
-    .signoff-line     { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-    .signoff-underline { width: 100%; border: none; border-bottom: 1.5px solid var(--ink); }
+    .signoff-row {
+      display: flex;
+      gap: 28px;
+      align-items: flex-end;
+      margin-top: 10px;
+    }
+
+    .signoff-line {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .signoff-underline {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid var(--ink);
+    }
 
     /* ── SPEC ROWS ── */
     .spec-row {
-      display: flex; gap: 10px; align-items: baseline;
-      font-size: 11px; line-height: 1.6;
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      font-size: 11px;
+      line-height: 1.6;
     }
+
     .spec-label {
-      font-size: 9px; font-weight: 700; letter-spacing: .05em;
-      text-transform: uppercase; color: var(--gray-300); flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--gray-300);
+      flex-shrink: 0;
     }
-    .spec-label::after { content: ':'; margin-right: 2px; }
-    .spec-val     { color: var(--ink); }
-    .spec-divider { border: none; border-top: 1px solid var(--gray-50); margin: 6px 0; }
+
+    .spec-label::after {
+      content: ':';
+      margin-right: 2px;
+    }
+
+    .spec-val {
+      color: var(--ink);
+    }
+
+    .spec-divider {
+      border: none;
+      border-top: 1px solid var(--gray-50);
+      margin: 6px 0;
+    }
 
     /* ── UPLOAD ZONE ── */
     #upload-zone {
-      width: 11in; margin: 40px auto;
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.12);
-      padding: 64px; text-align: center;
-      display: flex; flex-direction: column;
+      width: 11in;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+      padding: 64px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
     }
+
     #upload-zone h2 {
-      font-size: 18px; font-weight: 800; color: var(--ink);
-      margin: 0 0 8px; letter-spacing: .03em;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 8px;
+      letter-spacing: .03em;
     }
-    #upload-zone p { color: var(--gray-400); font-size: 12px; }
+
+    #upload-zone p {
+      color: var(--gray-400);
+      font-size: 12px;
+    }
 
     /* Full-page drag highlight */
     body.page-dragover::after {
       content: '';
-      position: fixed; inset: 0;
+      position: fixed;
+      inset: 0;
       border: 3px solid var(--section-label);
       background: color-mix(in srgb, var(--section-label) 4%, transparent);
-      pointer-events: none; z-index: 9999;
+      pointer-events: none;
+      z-index: 9999;
     }
 
     /* ── IMPORT LABEL ── */
     .import-label {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; font-weight: 700; color: var(--section-label);
-      background: var(--section-bg); border: 1.5px solid var(--section-label);
-      border-radius: 5px; padding: 5px 10px; cursor: pointer; transition: filter .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--section-label);
+      background: var(--section-bg);
+      border: 1.5px solid var(--section-label);
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: filter .15s;
     }
-    .import-label:hover { filter: brightness(.95); }
+
+    .import-label:hover {
+      filter: brightness(.95);
+    }
 
     /* ── ACTIVE JOBS PANEL ── */
-    #active-jobs-panel { margin-top: 28px; text-align: left; }
-    #active-jobs-panel h3 {
-      font-size: 10px; font-weight: 700; letter-spacing: .08em;
-      text-transform: uppercase; color: var(--gray-300); margin: 0 0 10px;
+    #active-jobs-panel {
+      margin-top: 28px;
+      text-align: left;
     }
+
+    #active-jobs-panel h3 {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--gray-300);
+      margin: 0 0 10px;
+    }
+
+    #active-jobs-list{
+      display: flex;
+      gap: 8px;
+    }
+
     .job-chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--gray-25); border: 1px solid var(--gray-100);
-      border-radius: 4px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gray-25);
+      border: 1px solid var(--gray-100);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
       transition: background .15s;
     }
-    .job-chip:hover   { background: var(--section-bg); border-color: var(--section-label); }
-    .job-chip-id      { font-weight: 700; }
-    .job-chip-phase {
-      font-size: 9px; font-weight: 700; letter-spacing: .05em;
-      text-transform: uppercase; padding: 1px 5px; border-radius: 8px;
+
+    .job-chip:hover {
+      background: var(--section-bg);
+      border-color: var(--section-label);
     }
-    .phase-planned  { background: var(--gold-tint);   color: var(--gold-dark); }
-    .phase-reviewed { background: var(--section-band);  color: var(--section-label); }
-    .phase-approved { background: #cce5ff;          color: var(--tier-t2-text); }
+
+    .job-chip-id {
+      font-weight: 700;
+    }
+
+    .job-chip-phase {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 8px;
+    }
+
+    .phase-planned {
+      background: var(--gold-tint);
+      color: var(--gold-dark);
+    }
+
+    .status-unset {
+      border-color: var(--gold-dark) !important;
+      background: var(--gold-tint) !important;
+      color: var(--gold-dark) !important;
+    }
+
+    .phase-reviewed {
+      background: var(--section-band);
+      color: var(--section-label);
+    }
+
+    .phase-approved {
+      background: #cce5ff;
+      color: var(--tier-t2-text);
+    }
 
     /* ── CHECKLIST PANEL ── */
     #checklist-panel {
-      border: 2px solid var(--section-label); border-radius: 6px;
-      margin: 12px 0; background: var(--section-bg);
+      border: 2px solid var(--section-label);
+      border-radius: 6px;
+      margin: 12px 0;
+      background: var(--section-bg);
     }
+
     #checklist-panel-header {
-      background: var(--section-label); color: #fff;
-      padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;
+      background: var(--section-label);
+      color: #fff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
     #checklist-panel-header h3 {
-      margin: 0; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
-    #checklist-body { padding: 10px 14px; }
+
+    #checklist-body {
+      padding: 10px 14px;
+    }
 
     .cl-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 4px; border-bottom: 1px solid var(--gray-150);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 4px;
+      border-bottom: 1px solid var(--gray-150);
     }
-    .cl-item:last-child              { border-bottom: none; }
-    .cl-item.arrived .cl-label       { text-decoration: line-through; color: var(--gray-300); }
-    .cl-item input[type=checkbox]    { accent-color: var(--section-label); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
-    .cl-label  { flex: 1; font-size: 12px; }
-    .cl-status {
-      font-size: 9px; font-weight: 700; letter-spacing: .05em;
-      text-transform: uppercase; padding: 2px 6px; border-radius: 8px;
-    }
-    .cl-status.not-in-stock { background: var(--tier-t4-bg); color: var(--tier-t4-text); }
-    .cl-status.ordered      { background: var(--tier-t3-bg); color: var(--tier-t3-text); }
-    .cl-status.in-house     { background: var(--tier-t1-bg); color: var(--tier-t1-text); }
-    .cl-status.dept         { background: var(--tier-t2-bg); color: var(--tier-t2-text); }
-    .cl-date { font-size: 10px; color: var(--gray-400); }
 
-    .checklist-progress { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 600; }
+    .cl-item:last-child {
+      border-bottom: none;
+    }
+
+    .cl-item.arrived .cl-label {
+      text-decoration: line-through;
+      color: var(--gray-300);
+    }
+
+    .cl-item input[type=checkbox] {
+      accent-color: var(--section-label);
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .cl-label {
+      flex: 1;
+      font-size: 12px;
+    }
+
+    .cl-status {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+
+    .cl-status.not-in-stock {
+      background: var(--tier-t4-bg);
+      color: var(--tier-t4-text);
+    }
+
+    .cl-status.ordered {
+      background: var(--tier-t3-bg);
+      color: var(--tier-t3-text);
+    }
+
+    .cl-status.in-house {
+      background: var(--tier-t1-bg);
+      color: var(--tier-t1-text);
+    }
+
+    .cl-status.dept {
+      background: var(--tier-t2-bg);
+      color: var(--tier-t2-text);
+    }
+
+    .cl-date {
+      font-size: 10px;
+      color: var(--gray-400);
+    }
+
+    .checklist-progress {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .8);
+      font-weight: 600;
+    }
 
     /* ── ORDER TRACKING ── */
     .order-track {
-      background: var(--section-bg); border-radius: 4px; padding: 8px 10px; margin-top: 6px;
+      background: var(--section-bg);
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-top: 6px;
     }
 
     /* ── PHASE BAR ── */
     .phase-bar {
-      background: var(--gray-10); border-bottom: 1px solid var(--gray-75);
-      padding: 8px 28px; display: flex; gap: 0; align-items: stretch;
+      background: var(--gray-10);
+      border-bottom: 1px solid var(--gray-75);
+      padding: 8px 28px;
+      display: flex;
+      gap: 0;
+      align-items: stretch;
     }
+
     .phase-step {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 4px 14px; color: var(--gray-300);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      color: var(--gray-300);
     }
-    .phase-step.active { color: var(--section-label); }
-    .phase-step.done   { color: var(--tier-t1-text); }
-    .phase-arrow { color: var(--gray-150); font-size: 14px; display: flex; align-items: center; }
+
+    .phase-step.active {
+      color: var(--section-label);
+    }
+
+    .phase-step.done {
+      color: var(--tier-t1-text);
+    }
+
+    .phase-arrow {
+      color: var(--gray-150);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+
     .phase-dot {
-      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gray-150);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 800; flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-150);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      flex-shrink: 0;
     }
-    .phase-step.active .phase-dot { border-color: var(--section-label); color: var(--section-label); background: var(--section-bg); }
-    .phase-step.done   .phase-dot { border-color: var(--tier-t1-text); color: #fff; background: var(--tier-t1-text); }
+
+    .phase-step.active .phase-dot {
+      border-color: var(--section-label);
+      color: var(--section-label);
+      background: var(--section-bg);
+    }
+
+    .phase-step.done .phase-dot {
+      border-color: var(--tier-t1-text);
+      color: #fff;
+      background: var(--tier-t1-text);
+    }
 
     /* ── STATUS MESSAGES ── */
     .status-msg {
-      font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 4px; display: none;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: none;
     }
-    .status-msg.ok   { background: var(--tier-t1-bg); color: var(--section-label); }
-    .status-msg.warn { background: var(--tier-t3-bg); color: var(--tier-t3-text); }
+
+    .status-msg.ok {
+      background: var(--tier-t1-bg);
+      color: var(--section-label);
+    }
+
+    .status-msg.warn {
+      background: var(--tier-t3-bg);
+      color: var(--tier-t3-text);
+    }
 
     /* ── SCREEN: hide print-only elements ── */
-    #stateEmbed { display: none; }
-    .print-stage-banner { display: none; }
+    #stateEmbed {
+      display: none;
+    }
+
+    .print-stage-banner {
+      display: none;
+    }
 
     /* ── @media print ──────────────────────────────────── */
     @media print {
-      @page { size: 11in 17in; margin: 0; }
+      @page {
+        size: 11in 17in;
+        margin: 0;
+      }
 
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
 
-      body { background: white; }
+      body {
+        background: white;
+      }
 
       /* Remove screen chrome */
       #main-toolbar,
       #upload-zone,
       .phase-bar,
-      #review-override-banner { display: none !important; }
+      #review-override-banner {
+        display: none !important;
+      }
 
       /* Sheet: no shadow, no margin */
-      .sheet { box-shadow: none !important; margin: 0 !important; }
+      .sheet {
+        box-shadow: none !important;
+        margin: 0 !important;
+      }
 
       /* ── Inputs → plain text ── */
-      input.box, textarea.notebox {
+      input.box,
+      textarea.notebox {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
@@ -290,7 +652,8 @@
       }
 
       /* ── Selects → plain text (show selected option value) ── */
-      select.box, select.hw-status {
+      select.box,
+      select.hw-status {
         border: none !important;
         background: transparent !important;
         -webkit-appearance: none !important;
@@ -300,11 +663,16 @@
 
       /* p1-lock overrides — keep same transparent style */
       .p1-lock .box,
-      .p1-lock select.box { background: transparent !important; color: var(--ink) !important; }
+      .p1-lock select.box {
+        background: transparent !important;
+        color: var(--ink) !important;
+      }
 
       /* p2-field background overrides */
       .p2-field .box,
-      .p2-field select.box { background: transparent !important; }
+      .p2-field select.box {
+        background: transparent !important;
+      }
 
       /* ── Stage banner (print-only) ── */
       .print-stage-banner {
@@ -318,11 +686,13 @@
         align-self: center;
         border: 1.5px solid;
       }
+
       .print-stage-banner.reviewed {
         background: var(--tier-t1-bg);
         color: var(--tier-t1-text);
         border-color: var(--tier-t1-border);
       }
+
       .print-stage-banner.approved {
         background: var(--tier-t2-bg);
         color: var(--tier-t2-text);
@@ -333,7 +703,9 @@
       #stateEmbed {
         display: block !important;
         position: absolute;
-        bottom: 0; left: 0; right: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
         font-size: 4.5pt;
         font-family: "Courier New", monospace;
         color: #ffffff;
@@ -345,9 +717,10 @@
     }
   </style>
 </head>
+
 <body>
 
-  
+
 
   <!-- ===== TOOLBAR ===== -->
   <div class="toolbar" id="main-toolbar">
@@ -356,7 +729,8 @@
       <span class="mode-pill">Coordinator Mode</span>
     </div>
     <div class="toolbar-right">
-      <span style="font-size:10px; color:var(--gray-300); font-style:italic;">Drop a saved sheet anywhere to reload it</span>
+      <span style="font-size:10px; color:var(--gray-300); font-style:italic;">Drop a saved sheet anywhere to reload
+        it</span>
       <span class="status-msg" id="export-status"></span>
       <!-- Phase 1 button -->
       <button class="btn btn-green" id="btn-save-reviewed" onclick="doSaveReviewed()" style="display:none;">
@@ -372,31 +746,37 @@
   <!-- ===== UPLOAD ZONE (shown before a PDF is loaded) ===== -->
   <div id="upload-zone">
     <h2>Coordinator — Preproduction Review</h2>
-    <p>Drop a <strong>planned PDF</strong> or <strong>reviewed PDF</strong> anywhere on the page to load it, or resume an active job below.</p>
+    <p>Drop a <strong>planned PDF</strong> or <strong>reviewed PDF</strong> anywhere on the page to load it, or resume
+      an active job below.</p>
     <p>
-      <a href="#" onclick="document.getElementById('pdf-upload-input').click(); return false;"
-         class="btn btn-gray"
-         style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; letter-spacing:.03em; text-transform:uppercase;">
+      <a href="#" onclick="document.getElementById('pdf-upload-input').click(); return false;" class="btn btn-gray"
+        style="display:inline-flex; align-items:center; gap:7px; text-decoration:none; letter-spacing:.03em; text-transform:uppercase;">
         <i class="fa-solid fa-arrow-up-from-bracket"></i> Browse for a file
       </a>
     </p>
     <input type="file" id="pdf-upload-input" accept=".pdf" style="display:none" onchange="handlePDFUpload(this)">
 
     <div id="active-jobs-panel" style="display:none;">
-      <h3>Active Jobs (saved on this machine)</h3>
+      <h3>Your Active Jobs</h3>
       <div id="active-jobs-list"></div>
     </div>
 
-    <div id="upload-error" style="display:none; margin-top:14px; font-size:11px; color:var(--tier-t4-text); font-weight:600;"></div>
+    <div id="upload-error"
+      style="display:none; margin-top:14px; font-size:11px; color:var(--tier-t4-text); font-weight:600;"></div>
   </div>
 
   <!-- ===== SHEET (hidden until PDF loaded) ===== -->
   <div class="sheet" id="main-sheet" style="display:none;">
+    <!-- TITLE BAR -->
+    <div class="title">
+      <span>Preproduction Materials List</span>
+      <div id="print-stage-banner" class="print-stage-banner"></div>
+    </div>
 
     <!-- Phase bar -->
     <div class="phase-bar" id="phase-bar">
       <div class="phase-step" id="phase-step-1">
-        <div class="phase-dot">1</div> Availability Review
+        <div class="phase-dot">1</div> Review
       </div>
       <div class="phase-arrow">›</div>
       <div class="phase-step" id="phase-step-2">
@@ -408,14 +788,10 @@
       </div>
     </div>
     <!-- Review-override banner (shown when editing availability from checklist phase) -->
-    <div id="review-override-banner" style="display:none; background:var(--tier-t3-bg); border-bottom:2px solid var(--section-band); padding:7px 28px; font-size:11px; color:var(--section-label); font-weight:600;">
-      <i class="fa-solid fa-pencil"></i> &nbsp;Editing availability — save a new Reviewed PDF when done to update the checklist.
-    </div>
-
-    <!-- TITLE BAR -->
-    <div class="title">
-      <span>Preproduction Materials List</span>
-      <div id="print-stage-banner" class="print-stage-banner"></div>
+    <div id="review-override-banner"
+      style="display:none; background:var(--tier-t3-bg); border-bottom:2px solid var(--section-band); padding:7px 28px; font-size:11px; color:var(--section-label); font-weight:600;">
+      <i class="fa-solid fa-pencil"></i> &nbsp;Editing availability — save a new Reviewed PDF when done to update the
+      checklist.
     </div>
 
     <div class="body">
@@ -452,50 +828,42 @@
       <div class="section" id="cover-materials-section">
         <div class="card-grid">
 
-        <!-- Leather -->
-        <div class="brow cover-card" id="leather-card" style="display:none;">
-          <div class="btype">Leather</div>
-          <div style="font-size:10px; color:var(--gray-400); font-style:italic;">Specs in Menu Construction Sheet</div>
-          <select id="leather-status" class="box" style="height:26px; width:260px;" onchange="updateTierUI();">
-            <option value="in-house">In-house and available</option>
-            <option value="ordered-in-stock">Ordered — in-stock at vendor</option>
-            <option value="not-in-stock">Ordered — NOT yet in-stock</option>
-          </select>
-        </div>
-
-        <!-- Fabric -->
-        <div class="brow cover-card" id="fabric-card" style="display:none;">
-          <div class="btype">Fabric / Cover Material</div>
-          <select id="fabric-status" class="box" style="height:26px; width:260px;"
-                  onchange="updateFabricOrderDetails(); updateTierUI();">
-            <option value="in-house">In-house and available</option>
-            <option value="ordered-in-stock">Ordered — in-stock at vendor</option>
-            <option value="not-in-stock">Ordered — NOT yet in-stock</option>
-          </select>
-          <!-- P1 specs — read-only -->
-          <div style="background:var(--section-bg); border-radius:4px; padding:8px 10px;">
-            <div style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Material Specs</div>
-            <div id="fabric-specs-display" style="font-size:11px; color:var(--section-label);"></div>
-          </div>
-          <!-- P2 order tracking -->
-          <div id="fabric-order-details" class="order-track" style="display:none;">
-            <div style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Order Tracking</div>
-            <div class="frow">
-              <div class="input-wrap">
-                <span class="lab" style="color:var(--section-label);">Date Ordered:</span>
-                <input type="text" class="box" id="fabric-date-ordered" placeholder="MM/DD/YYYY" style="width:130px; background:var(--section-bg);" onblur="validateDate(this);">
-              </div>
-              <div class="input-wrap">
-                <span class="lab" style="color:var(--section-label);">PO #:</span>
-                <input type="text" class="box" id="fabric-po" style="width:110px; background:var(--section-bg);">
-              </div>
-              <div class="input-wrap">
-                <span class="lab" style="color:var(--section-label);">Date Received:</span>
-                <input type="text" class="box" id="fabric-date-received" placeholder="MM/DD/YYYY" style="width:130px; background:var(--section-bg);" onblur="validateDate(this);">
-              </div>
+          <!-- Leather -->
+          <div class="brow" id="leather-card" style="display:none;">
+            <div class="btype">Leather</div>
+            <select id="leather-status" class="box status-unset" style="height:26px; width:100%;" onchange="updateStatusHighlight(this); updateTierUI();">
+              <option value="">— Select availability —</option>
+              <option value="in-house">In-house and available</option>
+              <option value="ordered-in-stock">Ordered — in-stock at vendor</option>
+              <option value="not-in-stock">Ordered — NOT yet in-stock</option>
+            </select>
+            <div id="leather-specs-display"
+              style="display:none; background:var(--section-bg); border-radius:4px; padding:8px 10px;">
+              <div
+                style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">
+                Material Specs</div>
+              <div id="leather-specs-rows" style="font-size:11px; color:var(--section-label);"></div>
             </div>
           </div>
-        </div>
+
+          <!-- Fabric -->
+          <div class="brow" id="fabric-card" style="display:none;">
+            <div class="btype">Fabric / Cover Material</div>
+            <select id="fabric-status" class="box status-unset" style="height:26px; width:100%;"
+              onchange="updateStatusHighlight(this); updateTierUI();">
+              <option value="">— Select availability —</option>
+              <option value="in-house">In-house and available</option>
+              <option value="ordered-in-stock">Ordered — in-stock at vendor</option>
+              <option value="not-in-stock">Ordered — NOT yet in-stock</option>
+            </select>
+            <!-- P1 specs — read-only -->
+            <div style="background:var(--section-bg); border-radius:4px; padding:8px 10px;">
+              <div
+                style="font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">
+                Material Specs</div>
+              <div id="fabric-specs-display" style="font-size:11px; color:var(--section-label);"></div>
+            </div>
+          </div>
 
         </div><!-- /.card-grid -->
       </div>
@@ -576,8 +944,8 @@
           <div id="tier-badge" class="tier-badge none" style="flex:1;">
             <div>
               <div class="tier-label" id="tier-label">LEAD TIME</div>
-              <div class="tier-main"  id="tier-main">Load a PDF above</div>
-              <div class="tier-sub"   id="tier-sub"></div>
+              <div class="tier-main" id="tier-main">Load a PDF above</div>
+              <div class="tier-sub" id="tier-sub"></div>
             </div>
             <div id="tier-factors" style="display:none;">
               <div class="tier-factors-head">Qualifying Factors:</div>
@@ -601,21 +969,24 @@
         </div>
         <div id="signoff-fields" style="display:none;">
           <label class="copt" style="font-size:12px; letter-spacing:0; text-transform:none; padding:6px 8px;">
-            <input type="checkbox" id="all-ready" style="width:15px; height:15px; accent-color:var(--section-label);" onchange="onAllReadyChange();">
-            <span>All order components in-house and available; order is ready to be scheduled and staged for Production.</span>
+            <input type="checkbox" id="all-ready" style="width:15px; height:15px; accent-color:var(--section-label);"
+              onchange="onAllReadyChange();">
+            <span>All order components in-house and available; order is ready to be scheduled and staged for
+              Production.</span>
           </label>
           <hr class="divider" style="margin:14px 0 12px; border-top-color:var(--section-band);">
           <div class="signoff-row">
             <div class="signoff-line">
               <span class="lab" style="color:var(--section-label);">Material Handler Signature:</span>
-              <input type="text" class="box" id="signoff-name" style="width:100%; background:var(--section-bg); border-color:transparent;">
+              <input type="text" class="box" id="signoff-name"
+                style="width:100%; background:var(--section-bg); border-color:transparent;">
               <div class="signoff-underline"></div>
             </div>
             <div class="signoff-line" style="max-width:200px;">
               <span class="lab" style="color:var(--section-label);">Date:</span>
               <input type="text" class="box" id="signoff-date" placeholder="MM/DD/YYYY"
-                     style="width:100%; background:var(--section-bg); border-color:transparent;"
-                     onblur="validateDate(this);">
+                style="width:100%; background:var(--section-bg); border-color:transparent;"
+                onblur="validateDate(this);">
               <div class="signoff-underline"></div>
             </div>
           </div>
@@ -623,7 +994,7 @@
       </div>
 
     </div><!-- /.body -->
-  <div id="stateEmbed"></div>
+    <div id="stateEmbed"></div>
   </div><!-- /.sheet -->
 
   <script src="reference/shared.js"></script>
@@ -631,7 +1002,7 @@
     /* =============================================================
        REDIRECT if wrong role
     ============================================================= */
-    (function() {
+    (function () {
       var role = localStorage.getItem('pp_role');
       if (!role) { window.location.href = 'index.html'; return; }
       if (role === 'planner') { window.location.href = 'planner.html'; }
@@ -640,34 +1011,53 @@
     /* =============================================================
        APP STATE
     ============================================================= */
-    var CURRENT_STATE   = null;  /* Full state object from PDF */
-    var CURRENT_JOB_ID  = null;
-    var CURRENT_PHASE   = 1;     /* 1=review, 2=checklist, 3=signoff */
+    var CURRENT_STATE = null;  /* Full state object from PDF */
+    var CURRENT_JOB_ID = null;
+    var CURRENT_PHASE = 1;     /* 1=review, 2=checklist, 3=signoff */
     var REVIEW_OVERRIDE = false; /* True when coordinator clicks back to edit availability */
 
     /* IDs of sections hidden in checklist-only view */
     var FORM_SECTION_IDS = [
       'cover-materials-band', 'cover-materials-section',
-      'hardware-band',        'hardware-section',
-      'dept-band',            'dept-section',
-      'interior-band',        'interior-section',
-      'notes-band',           'notes-section'
+      'hardware-band', 'hardware-section',
+      'dept-band', 'dept-section',
+      'interior-band', 'interior-section',
+      'notes-band', 'notes-section'
     ];
     var FORM_SECTION_CACHE = {};  /* display values saved after loadState sets visibility */
 
+    /* ── V4 hardware config (mirrors planner's HW_PLANNER_CONFIG) ── */
+    var HW_PLANNER_CONFIG = [
+      { id: 'magnets', label: 'Magnets', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
+      { id: 'elastic-cords', label: 'Elastic Cords / Loops', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
+      { id: 'eyelets', label: 'Eyelets', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }] },
+      { id: 'o-rings', label: 'O-Rings', fields: [{ id: 'desc', label: 'Description' }] },
+      { id: 'ring-binder', label: 'Ring Binder', fields: [{ id: 'rings', label: '# of Rings' }, { id: 'color', label: 'Color' }, { id: 'size', label: 'Description / Size' }] },
+      { id: 'bands', label: 'Bands', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }] },
+      { id: 'clips', label: 'Clips', fields: [{ id: 'color', label: 'Color' }] },
+      { id: 'romark', label: 'Romark', fields: [{ id: 'size', label: 'Size' }, { id: 'color', label: 'Color' }, { id: 'thickness', label: 'Thickness' }] },
+      { id: 'rivets', label: 'Rivets', fields: [{ id: 'desc', label: 'Description' }] },
+      { id: 'plastic-sleeves', label: 'Plastic Sleeves', fields: [{ id: 'type', label: 'Type / Size' }] },
+      { id: 'snaps', label: 'Snaps', fields: [{ id: 'line', label: 'Line' }, { id: 'type', label: 'Type' }] },
+      { id: 'screw-posts', label: 'Screw Posts', fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
+      { id: 'custom-hardware', label: 'Custom Hardware', fields: [{ id: 'desc', label: 'Description' }] }
+    ];
+    var HW_CONFIG_MAP = {};
+    HW_PLANNER_CONFIG.forEach(function (h) { HW_CONFIG_MAP[h.id] = h; });
+
     function cacheFormSectionVisibility() {
-      FORM_SECTION_IDS.forEach(function(id) {
+      FORM_SECTION_IDS.forEach(function (id) {
         var el = document.getElementById(id);
         FORM_SECTION_CACHE[id] = el ? el.style.display : '';
       });
     }
     function hideFormSections() {
-      FORM_SECTION_IDS.forEach(function(id) {
+      FORM_SECTION_IDS.forEach(function (id) {
         var el = document.getElementById(id); if (el) el.style.display = 'none';
       });
     }
     function restoreFormSections() {
-      FORM_SECTION_IDS.forEach(function(id) {
+      FORM_SECTION_IDS.forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = FORM_SECTION_CACHE[id] !== undefined ? FORM_SECTION_CACHE[id] : '';
       });
@@ -677,23 +1067,23 @@
        ACTIVE JOBS PANEL
     ============================================================= */
     function renderActiveJobs() {
-      var ids   = getActiveJobIds();
+      var ids = getActiveJobIds();
       var panel = document.getElementById('active-jobs-panel');
-      var list  = document.getElementById('active-jobs-list');
+      var list = document.getElementById('active-jobs-list');
       list.innerHTML = '';
       if (ids.length === 0) { panel.style.display = 'none'; return; }
       panel.style.display = '';
-      ids.forEach(function(id) {
+      ids.forEach(function (id) {
         var s = loadJobState(id);
         if (!s) return;
-        var phase  = s._coordPhase || 1;
-        var pLabel = phase >= 3 ? 'Approved' : phase === 2 ? 'Checklist' : 'Planned';
+        var phase = s._coordPhase || 1;
+        var pLabel = phase >= 3 ? 'Approved' : phase === 2 ? 'Reviewed' : 'Planned';
         var pClass = phase >= 3 ? 'phase-approved' : phase === 2 ? 'phase-reviewed' : 'phase-planned';
-        var chip   = document.createElement('div');
+        var chip = document.createElement('div');
         chip.className = 'job-chip';
         chip.innerHTML = '<span class="job-chip-id">' + id + '</span>' +
           '<span class="job-chip-phase ' + pClass + '">' + pLabel + '</span>';
-        chip.onclick = function() { loadFromLocalStorage(id); };
+        chip.onclick = function () { loadFromLocalStorage(id); };
         list.appendChild(chip);
       });
     }
@@ -706,13 +1096,13 @@
     ============================================================= */
     var _dragCount = 0;
 
-    document.addEventListener('dragenter', function(e) {
+    document.addEventListener('dragenter', function (e) {
       e.preventDefault();
       _dragCount++;
       document.body.classList.add('page-dragover');
     });
 
-    document.addEventListener('dragleave', function(e) {
+    document.addEventListener('dragleave', function (e) {
       _dragCount--;
       if (_dragCount <= 0) {
         _dragCount = 0;
@@ -720,11 +1110,11 @@
       }
     });
 
-    document.addEventListener('dragover', function(e) {
+    document.addEventListener('dragover', function (e) {
       e.preventDefault(); /* Critical — prevents Chrome from opening the PDF */
     });
 
-    document.addEventListener('drop', function(e) {
+    document.addEventListener('drop', function (e) {
       e.preventDefault();
       _dragCount = 0;
       document.body.classList.remove('page-dragover');
@@ -744,7 +1134,7 @@
       try {
         var state = await extractStateFromPDF(file);
         loadState(state);
-      } catch(err) {
+      } catch (err) {
         showUploadError(err.message);
       }
     }
@@ -771,9 +1161,9 @@
        APPLY STATE TO UI
     ============================================================= */
     function loadState(state) {
-      CURRENT_STATE  = state;
+      CURRENT_STATE = state;
       CURRENT_JOB_ID = state.jobOrder;
-      CURRENT_PHASE  = state._coordPhase || 1;
+      CURRENT_PHASE = state._coordPhase || 1;
 
       /* Register job in active jobs list the moment it's opened */
       if (state.jobOrder) {
@@ -783,95 +1173,134 @@
 
       /* Hide upload zone, show sheet */
       document.getElementById('upload-zone').style.display = 'none';
-      document.getElementById('main-sheet').style.display  = '';
+      document.getElementById('main-sheet').style.display = '';
 
       /* ── Header fields ── */
-      document.getElementById('job-order').value   = state.jobOrder   || '';
-      document.getElementById('order-qty').value   = state.orderQty   || '';
+      document.getElementById('job-order').value = state.jobOrder || '';
+      document.getElementById('order-qty').value = state.orderQty || '';
       document.getElementById('date-received').value = state.dateReceived || '';
+
+      /* ── Normalize v4 coverMaterials → legacy leatherInclude / fabric ── */
+      if (state.coverMaterials && state.coverMaterials.length > 0) {
+        var _leatherRows = state.coverMaterials.filter(function (r) { return r.type === 'leather'; });
+        var _bcRows = state.coverMaterials.filter(function (r) { return r.type === 'bookcloth'; });
+        // Re-derive only if planner didn't already set them (belt-and-suspenders)
+        if (_leatherRows.length > 0 && !state.leatherInclude) state.leatherInclude = true;
+        if (_bcRows.length > 0 && !(state.fabric && state.fabric.include)) {
+          state.fabric = Object.assign({}, state.fabric || {}, {
+            include: true,
+            rows: _bcRows.map(function (r) {
+              return {
+                vendor: r.fields.vendor || '', productLine: r.fields.productLine || '',
+                color: r.fields.color || '', decoration: r.fields.decoration || '',
+                qty: r.qty || '', unit: r.unit || ''
+              };
+            })
+          });
+        }
+      }
 
       /* ── Leather ── */
       var leatherIncluded = !!state.leatherInclude;
+      var coordPhase = state._coordPhase || 1;
       document.getElementById('leather-card').style.display = leatherIncluded ? '' : 'none';
-      if (leatherIncluded && state.leatherStatus) {
-        document.getElementById('leather-status').value = state.leatherStatus;
+      var lStatusEl = document.getElementById('leather-status');
+      lStatusEl.value = (coordPhase >= 2 && state.leatherStatus) ? state.leatherStatus : '';
+      updateStatusHighlight(lStatusEl);
+      /* Leather specs from v4 coverMaterials */
+      var leatherSpecsWrap = document.getElementById('leather-specs-display');
+      var leatherSpecsRows = document.getElementById('leather-specs-rows');
+      var leatherRows = (state.coverMaterials || []).filter(function (r) { return r.type === 'leather'; });
+      if (leatherRows.length > 0) {
+        var fieldLabels = { productLine: 'Product Line', weight: 'Weight', color: 'Color', id: 'ID' };
+        leatherSpecsRows.innerHTML = leatherRows.map(function (r, i) {
+          var rows = Object.keys(fieldLabels).map(function (k) {
+            var v = (r.fields || {})[k];
+            return v ? '<div class="spec-row"><span class="spec-label">' + fieldLabels[k] + '</span><span class="spec-val">' + escHtml(v) + '</span></div>' : '';
+          }).join('');
+          if (r.qty) rows += '<div class="spec-row"><span class="spec-label">Qty</span><span class="spec-val">' + escHtml(r.qty) + (r.unit ? ' ' + escHtml(r.unit) : '') + '</span></div>';
+          return (i > 0 ? '<hr class="spec-divider">' : '') + rows;
+        }).join('');
+        leatherSpecsWrap.style.display = '';
+      } else {
+        leatherSpecsWrap.style.display = 'none';
       }
 
       /* ── Fabric ── */
       var fabInclude = !!(state.fabric && state.fabric.include);
       document.getElementById('fabric-card').style.display = fabInclude ? '' : 'none';
       if (fabInclude) {
-        if (state.fabric.status) document.getElementById('fabric-status').value = state.fabric.status;
+        var fStatusEl = document.getElementById('fabric-status');
+        fStatusEl.value = (coordPhase >= 2 && state.fabric.status) ? state.fabric.status : '';
+        updateStatusHighlight(fStatusEl);
         /* Display planner specs as label: value rows */
         var specsEl = document.getElementById('fabric-specs-display');
         var fab = state.fabric;
         if (fab.rows && fab.rows.length > 0) {
-          specsEl.innerHTML = fab.rows.map(function(r, i) {
+          specsEl.innerHTML = fab.rows.map(function (r, i) {
             var rows = [
-              ['Vendor',       r.vendor],
+              ['Vendor', r.vendor],
               ['Product Line', r.productLine],
-              ['Color',        r.color],
-              ['Decoration',   r.decoration],
-              ['Qty',          r.qty ? r.qty + (r.unit ? ' ' + r.unit : '') : ''],
-            ].filter(function(p) { return p[1]; })
-             .map(function(p) {
-               return '<div class="spec-row"><span class="spec-label">' + p[0] + '</span><span class="spec-val">' + escHtml(p[1]) + '</span></div>';
-             }).join('');
+              ['Color', r.color],
+              ['Decoration', r.decoration],
+              ['Qty', r.qty ? r.qty + (r.unit ? ' ' + r.unit : '') : ''],
+            ].filter(function (p) { return p[1]; })
+              .map(function (p) {
+                return '<div class="spec-row"><span class="spec-label">' + p[0] + '</span><span class="spec-val">' + escHtml(p[1]) + '</span></div>';
+              }).join('');
             return (i > 0 ? '<hr class="spec-divider">' : '') + rows;
           }).join('');
         } else {
           /* Legacy format — best-effort label:value */
           var rows = [];
           if (fab.category) rows.push(['Category', fab.category]);
-          if (fab.family)   rows.push(['Family', fab.family]);
-          if (fab.fields)   Object.keys(fab.fields).forEach(function(k) { if (fab.fields[k]) rows.push([k, fab.fields[k]]); });
-          if (fab.qty)      rows.push(['Qty', fab.qty + (fab.unit ? ' ' + fab.unit : '')]);
-          specsEl.innerHTML = rows.map(function(p) {
+          if (fab.family) rows.push(['Family', fab.family]);
+          if (fab.fields) Object.keys(fab.fields).forEach(function (k) { if (fab.fields[k]) rows.push([k, fab.fields[k]]); });
+          if (fab.qty) rows.push(['Qty', fab.qty + (fab.unit ? ' ' + fab.unit : '')]);
+          specsEl.innerHTML = rows.map(function (p) {
             return '<div class="spec-row"><span class="spec-label">' + p[0] + '</span><span class="spec-val">' + escHtml(p[1]) + '</span></div>';
           }).join('') || '—';
         }
         /* Order tracking (pre-fill if already saved) */
-        if (fab.dateOrdered) document.getElementById('fabric-date-ordered').value = fab.dateOrdered;
-        if (fab.po)          document.getElementById('fabric-po').value = fab.po;
-        if (fab.dateReceivedCoord) document.getElementById('fabric-date-received').value = fab.dateReceivedCoord;
-        updateFabricOrderDetails();
       }
       /* Hide entire cover section if nothing selected */
       var showCover = leatherIncluded || fabInclude;
-      document.getElementById('cover-materials-band').style.display    = showCover ? '' : 'none';
+      document.getElementById('cover-materials-band').style.display = showCover ? '' : 'none';
       document.getElementById('cover-materials-section').style.display = showCover ? '' : 'none';
 
       /* ── Hardware ── */
-      var hwActiveCount = buildHwTable(state.hardware || []);
-      document.getElementById('hardware-band').style.display    = hwActiveCount > 0 ? '' : 'none';
+      var hwActiveCount = (state.plannerHardware && state.plannerHardware.length > 0)
+        ? buildHwTableV4(state.plannerHardware, state.hardware || [])
+        : buildHwTable(state.hardware || []);
+      document.getElementById('hardware-band').style.display = hwActiveCount > 0 ? '' : 'none';
       document.getElementById('hardware-section').style.display = hwActiveCount > 0 ? '' : 'none';
 
       /* ── Departments ── */
-      var d  = state.depts || {};
+      var d = state.depts || {};
       var dc = state.deptsCompleted || {};
       var anyDeptNeeded = false;
-      ['deboss','offset','flatbed','sewing','woodshop','metal'].forEach(function(k) {
+      ['deboss', 'offset', 'flatbed', 'sewing', 'woodshop', 'metal'].forEach(function (k) {
         var needed = !!d[k];
         if (needed) anyDeptNeeded = true;
-        var card = document.getElementById('dept-card-'+k);
+        var card = document.getElementById('dept-card-' + k);
         if (card) card.style.display = needed ? '' : 'none';
-        var complCb = document.getElementById('dept-'+k+'-completed');
+        var complCb = document.getElementById('dept-' + k + '-completed');
         if (complCb) complCb.checked = !!dc[k];
       });
       var metalTippin = document.getElementById('dept-metal-tippin');
       if (metalTippin) metalTippin.checked = !!state.metalTippin;
       var metalScopeDisplay = document.getElementById('metal-scope-display');
       if (metalScopeDisplay) metalScopeDisplay.textContent = state.metalTippin ? 'Tip In Only' : (d.metal ? 'Full' : '');
-      document.getElementById('dept-band').style.display    = anyDeptNeeded ? '' : 'none';
+      document.getElementById('dept-band').style.display = anyDeptNeeded ? '' : 'none';
       document.getElementById('dept-section').style.display = anyDeptNeeded ? '' : 'none';
 
       /* ── Interior ── */
       var ic = state.interior || {};
-      document.getElementById('interior-row-cb').style.display      = ic.cbInclude      ? '' : 'none';
+      document.getElementById('interior-row-cb').style.display = ic.cbInclude ? '' : 'none';
       document.getElementById('interior-row-pockets').style.display = ic.pocketsInclude ? '' : 'none';
-      document.getElementById('interior-row-tabs').style.display    = ic.tabsInclude    ? '' : 'none';
+      document.getElementById('interior-row-tabs').style.display = ic.tabsInclude ? '' : 'none';
       var anyInterior = ic.cbInclude || ic.pocketsInclude || ic.tabsInclude;
-      document.getElementById('interior-band').style.display    = anyInterior ? '' : 'none';
+      document.getElementById('interior-band').style.display = anyInterior ? '' : 'none';
       document.getElementById('interior-section').style.display = anyInterior ? '' : 'none';
       if (ic.cbInclude) {
         document.getElementById('cb-details-display').textContent =
@@ -886,14 +1315,14 @@
       var notesVal = state.notes || '';
       document.getElementById('notes-field').value = notesVal;
       var hasNotes = notesVal.trim().length > 0;
-      document.getElementById('notes-band').style.display    = hasNotes ? '' : 'none';
+      document.getElementById('notes-band').style.display = hasNotes ? '' : 'none';
       document.getElementById('notes-section').style.display = hasNotes ? '' : 'none';
 
       /* ── Sign-off ── */
       if (state.signoff) {
         document.getElementById('signoff-name').value = state.signoff.name || '';
         document.getElementById('signoff-date').value = state.signoff.date || '';
-        document.getElementById('all-ready').checked  = !!state.signoff.allReady;
+        document.getElementById('all-ready').checked = !!state.signoff.allReady;
       } else {
         /* Pre-fill today for new reviews */
         document.getElementById('signoff-date').value = todayString();
@@ -917,9 +1346,6 @@
        FABRIC ORDER DETAILS TOGGLE
     ============================================================= */
     function updateFabricOrderDetails() {
-      var val = document.getElementById('fabric-status').value;
-      var od  = document.getElementById('fabric-order-details');
-      od.style.display = (val === 'ordered-in-stock' || val === 'not-in-stock') ? '' : 'none';
     }
 
     /* =============================================================
@@ -929,14 +1355,15 @@
       var container = document.getElementById('hw-cards');
       container.innerHTML = '';
       var activeCount = 0;
-      HW_MATERIALS.forEach(function(mat, idx) {
-        var hw     = (hwState[idx] || {});
+      HW_MATERIALS.forEach(function (mat, idx) {
+        var hw = (hwState[idx] || {});
         var active = !!hw.active;
         if (!active) return;
         activeCount++;
-        var statusVal = hw.status || 'in-house';
+        var coordPhase = (CURRENT_STATE || {})._coordPhase || 1;
+        var statusVal = (coordPhase >= 2 && hw.status) ? hw.status : '';
         var card = document.createElement('div');
-        card.className = 'brow' + (statusVal === 'not-in-stock' ? ' hw-bad' : statusVal === 'ordered-in-stock' ? ' hw-warn' : '');
+        card.className = 'brow';
         card.dataset.matId = mat.id;
 
         /* Title */
@@ -946,17 +1373,18 @@
         card.appendChild(title);
 
         /* Availability select */
-        var opts = STATUS_OPTS.replace('value="'+statusVal+'"', 'value="'+statusVal+'" selected');
+        var blankOpt = '<option value="">— Select availability —</option>';
+        var opts = blankOpt + STATUS_OPTS.replace('value="' + statusVal + '"', 'value="' + statusVal + '" selected');
         var sel = document.createElement('select');
-        sel.className = 'hw-status box';
+        sel.className = 'hw-status box' + (statusVal === '' ? ' status-unset' : '');
         sel.style.cssText = 'height:26px; width:100%;';
-        sel.setAttribute('onchange', 'updateHwRowStyle(this); updateTierUI();');
+        sel.setAttribute('onchange', 'updateStatusHighlight(this); updateTierUI();');
         sel.innerHTML = opts;
         card.appendChild(sel);
 
         /* Spec fields — label: value rows */
         if (mat.fields && mat.fields.length > 0) {
-          mat.fields.forEach(function(f, fi) {
+          mat.fields.forEach(function (f, fi) {
             var val = (hw.fields || [])[fi] || '';
             if (!val) return;
             var row = document.createElement('div');
@@ -971,15 +1399,85 @@
       return activeCount;
     }
 
-    function updateHwRowStyle(sel) {
-      var card = sel.closest('.brow');
-      card.classList.remove('hw-bad', 'hw-warn');
-      if (sel.value === 'not-in-stock')     card.classList.add('hw-bad');
-      if (sel.value === 'ordered-in-stock') card.classList.add('hw-warn');
+    /* V4: plannerHardware = [{type, fields:{id:val}, qtyEa}], savedHw = legacy hw array for status */
+    function buildHwTableV4(plannerHw, savedHw) {
+      var container = document.getElementById('hw-cards');
+      container.innerHTML = '';
+      var activeCount = 0;
+      var orderQty = parseInt((CURRENT_STATE || {}).orderQty) || 0;
+      var coordPhase = (CURRENT_STATE || {})._coordPhase || 1;
+
+      plannerHw.forEach(function (ph) {
+        activeCount++;
+        var conf = HW_CONFIG_MAP[ph.type] || { label: ph.type, fields: [] };
+        /* Restore coordinator-saved status only if coordinator has saved before */
+        var existing = (savedHw || []).filter(function (h) { return h.id === ph.type; })[0] || {};
+        var statusVal = (coordPhase >= 2 && existing.status) ? existing.status : '';
+
+        var card = document.createElement('div');
+        card.className = 'brow';
+        card.dataset.matId = ph.type;
+
+        /* Title */
+        var title = document.createElement('div');
+        title.className = 'btype';
+        title.textContent = conf.label;
+        card.appendChild(title);
+
+        /* Availability select */
+        var blankOpt = '<option value="">— Select availability —</option>';
+        var opts = blankOpt + STATUS_OPTS.replace('value="' + statusVal + '"', 'value="' + statusVal + '" selected');
+        var sel = document.createElement('select');
+        sel.className = 'hw-status box' + (statusVal === '' ? ' status-unset' : '');
+        sel.style.cssText = 'height:26px; width:100%;';
+        sel.setAttribute('onchange', 'updateStatusHighlight(this); updateTierUI();');
+        sel.innerHTML = opts;
+        card.appendChild(sel);
+
+        /* Spec fields + qty info in a read-only specs block */
+        var specsWrap = document.createElement('div');
+        specsWrap.style.cssText = 'background:var(--section-bg); border-radius:4px; padding:8px 10px;';
+        var specsHead = document.createElement('div');
+        specsHead.style.cssText = 'font-size:9px; font-weight:700; color:var(--section-label); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;';
+        specsHead.textContent = 'Specs';
+        specsWrap.appendChild(specsHead);
+
+        conf.fields.forEach(function (f) {
+          var val = (ph.fields || {})[f.id] || '';
+          if (!val) return;
+          var row = document.createElement('div');
+          row.className = 'spec-row';
+          row.innerHTML = '<span class="spec-label">' + escHtml(f.label) + '</span><span class="spec-val">' + escHtml(val) + '</span>';
+          specsWrap.appendChild(row);
+        });
+
+        /* Qty/ea and total qty */
+        var qtyEa = parseInt(ph.qtyEa) || 0;
+        if (ph.qtyEa) {
+          var qrow = document.createElement('div');
+          qrow.className = 'spec-row';
+          var totalStr = (orderQty && qtyEa) ? ' <span style="color:var(--gray-300);">(' + (orderQty * qtyEa) + ' total)</span>' : '';
+          qrow.innerHTML = '<span class="spec-label">Qty/ea</span><span class="spec-val">' + escHtml(ph.qtyEa) + totalStr + '</span>';
+          specsWrap.appendChild(qrow);
+        }
+
+        card.appendChild(specsWrap);
+        container.appendChild(card);
+      });
+      return activeCount;
     }
 
-    function escHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    function updateStatusHighlight(sel) {
+      sel.classList.toggle('status-unset', sel.value === '');
+    }
+
+function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function shortDate() {
+      var d = new Date();
+      return (d.getMonth() + 1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2);
     }
 
     /* =============================================================
@@ -989,9 +1487,9 @@
       /* HW: read availability selects from cards; preserve planner field values from state */
       var existingHw = (CURRENT_STATE || {}).hardware || [];
       var hw = [];
-      document.querySelectorAll('#hw-cards .brow[data-mat-id]').forEach(function(card) {
+      document.querySelectorAll('#hw-cards .brow[data-mat-id]').forEach(function (card) {
         var matId = card.dataset.matId;
-        var existing = existingHw.filter(function(h) { return h.id === matId; })[0] || {};
+        var existing = existingHw.filter(function (h) { return h.id === matId; })[0] || {};
         var sel = card.querySelector('.hw-status');
         hw.push({ id: matId, active: true, fields: existing.fields || [], status: sel ? sel.value : 'in-house' });
       });
@@ -1001,9 +1499,12 @@
       state.fabric = Object.assign({}, state.fabric || {});
       state.fabric.status = document.getElementById('fabric-status').value;
       state.hardware = hw;
+      /* Preserve v4 fields pass-through */
+      if (CURRENT_STATE && CURRENT_STATE.coverMaterials) state.coverMaterials = CURRENT_STATE.coverMaterials;
+      if (CURRENT_STATE && CURRENT_STATE.plannerHardware) state.plannerHardware = CURRENT_STATE.plannerHardware;
       state.signoff = {
-        name:     document.getElementById('signoff-name').value,
-        date:     document.getElementById('signoff-date').value,
+        name: document.getElementById('signoff-name').value,
+        date: document.getElementById('signoff-date').value,
         allReady: document.getElementById('all-ready').checked
       };
       return state;
@@ -1011,31 +1512,31 @@
 
     function updateTierUI() {
       if (!CURRENT_STATE) return;
-      var state  = collectCoordState();
+      var state = collectCoordState();
       var result = determineTierFromState(state, 'coordinator');
-      var info   = TIER_INFO[result.tier];
+      var info = TIER_INFO[result.tier];
 
-      var badge  = document.getElementById('tier-badge');
+      var badge = document.getElementById('tier-badge');
       var dueBox = document.getElementById('due-date-box');
-      var ddEl   = document.getElementById('due-date-display');
-      var main   = document.getElementById('tier-main');
-      var sub    = document.getElementById('tier-sub');
-      var lbl    = document.getElementById('tier-label');
-      var fac    = document.getElementById('tier-factors');
-      var lst    = document.getElementById('tier-reasons');
+      var ddEl = document.getElementById('due-date-display');
+      var main = document.getElementById('tier-main');
+      var sub = document.getElementById('tier-sub');
+      var lbl = document.getElementById('tier-label');
+      var fac = document.getElementById('tier-factors');
+      var lst = document.getElementById('tier-reasons');
 
-      badge.className  = 'tier-badge '    + info.cls;
-      dueBox.className = 'due-date-box '  + info.cls;
-      lbl.textContent  = 'LEAD TIME';
+      badge.className = 'tier-badge ' + info.cls;
+      dueBox.className = 'due-date-box ' + info.cls;
+      lbl.textContent = 'LEAD TIME';
       main.textContent = info.label;
-      sub.textContent  = info.days ? info.days + ' Work Days' : 'To be determined';
+      sub.textContent = info.days ? info.days + ' Work Days' : 'To be determined';
 
       lst.innerHTML = '';
       fac.style.display = '';
       if (result.reasons.length === 0) {
         lst.innerHTML = '<li>All conditions within Tier 1 thresholds</li>';
       } else {
-        result.reasons.forEach(function(r) {
+        result.reasons.forEach(function (r) {
           var li = document.createElement('li'); li.textContent = r.text; lst.appendChild(li);
         });
       }
@@ -1051,23 +1552,23 @@
        PHASE MANAGEMENT
     ============================================================= */
     function renderPhase(phase) {
-      var allDone  = checklistAllDone();
+      var allDone = checklistAllDone();
       var showForm = (phase === 1 || REVIEW_OVERRIDE);
 
       /* ── Phase bar ── */
       if (REVIEW_OVERRIDE) {
         /* Step 1 active (editing), everything else reset to pending */
-        [1,2,3].forEach(function(n) {
-          var el  = document.getElementById('phase-step-'+n);
+        [1, 2, 3].forEach(function (n) {
+          var el = document.getElementById('phase-step-' + n);
           var dot = el.querySelector('.phase-dot');
           if (n === 1) { el.className = 'phase-step active'; dot.textContent = '1'; }
-          else         { el.className = 'phase-step';        dot.textContent = String(n); }
+          else { el.className = 'phase-step'; dot.textContent = String(n); }
         });
       } else {
         for (var i = 1; i <= 3; i++) {
-          var el  = document.getElementById('phase-step-'+i);
+          var el = document.getElementById('phase-step-' + i);
           var dot = el.querySelector('.phase-dot');
-          el.className  = 'phase-step' + (i < phase ? ' done' : i === phase ? ' active' : '');
+          el.className = 'phase-step' + (i < phase ? ' done' : i === phase ? ' active' : '');
           dot.innerHTML = i < phase ? '<i class="fa-solid fa-check"></i>' : String(i);
         }
       }
@@ -1075,13 +1576,13 @@
       /* ── Step 1 breadcrumb — clickable in checklist mode to go back ── */
       var step1 = document.getElementById('phase-step-1');
       if (phase >= 2 && !REVIEW_OVERRIDE) {
-        step1.style.cursor  = 'pointer';
-        step1.title         = 'Click to edit availability';
+        step1.style.cursor = 'pointer';
+        step1.title = 'Click to edit availability';
         step1.style.textDecoration = 'underline dotted';
         step1.onclick = showAvailabilityReview;
       } else {
-        step1.style.cursor  = '';
-        step1.title         = '';
+        step1.style.cursor = '';
+        step1.title = '';
         step1.style.textDecoration = '';
         step1.onclick = null;
       }
@@ -1091,27 +1592,27 @@
 
       /* ── Form section visibility ── */
       if (showForm) { restoreFormSections(); }
-      else          { hideFormSections();    }
+      else { hideFormSections(); }
 
       /* ── Checklist panel ── */
       document.getElementById('checklist-panel').style.display = phase >= 2 ? '' : 'none';
 
       /* ── Sign-off ── */
-      var signoffBand   = document.getElementById('signoff-band');
-      var signoffSect   = document.getElementById('signoff-section');
+      var signoffBand = document.getElementById('signoff-band');
+      var signoffSect = document.getElementById('signoff-section');
       var signoffLocked = document.getElementById('signoff-locked-msg');
       var signoffFields = document.getElementById('signoff-fields');
       if (!showForm && phase >= 2 && allDone) {
         /* Checklist-only view, all items done — show sign-off */
-        signoffBand.style.display   = '';
-        signoffSect.style.display   = '';
+        signoffBand.style.display = '';
+        signoffSect.style.display = '';
         signoffLocked.style.display = 'none';
         signoffFields.style.display = '';
         document.getElementById('btn-save-approved').disabled = false;
       } else {
         /* Phase 1 / Phase 2 incomplete — hide sign-off entirely */
-        signoffBand.style.display   = 'none';
-        signoffSect.style.display   = 'none';
+        signoffBand.style.display = 'none';
+        signoffSect.style.display = 'none';
         signoffLocked.style.display = '';
         signoffFields.style.display = 'none';
         document.getElementById('btn-save-approved').disabled = true;
@@ -1136,19 +1637,19 @@
     ============================================================= */
     function renderChecklist(checklist) {
       var panel = document.getElementById('checklist-panel');
-      var body  = document.getElementById('checklist-body');
+      var body = document.getElementById('checklist-body');
       panel.style.display = '';
       body.innerHTML = '';
 
-      checklist.forEach(function(item, idx) {
+      checklist.forEach(function (item, idx) {
         var div = document.createElement('div');
         div.className = 'cl-item' + (item.arrived ? ' arrived' : '');
         div.dataset.idx = idx;
 
-        var statusLabel = item.status === 'not-in-stock'     ? '<span class="cl-status not-in-stock">Not in Stock</span>'
-                        : item.status === 'ordered-in-stock' ? '<span class="cl-status ordered">Ordered</span>'
-                        : item.status === 'dept'             ? '<span class="cl-status dept">Dept</span>'
-                        :                                       '<span class="cl-status in-house">In-House</span>';
+        var statusLabel = item.status === 'not-in-stock' ? '<span class="cl-status not-in-stock">Not in Stock</span>'
+          : item.status === 'ordered-in-stock' ? '<span class="cl-status ordered">Ordered</span>'
+            : item.status === 'dept' ? '<span class="cl-status dept">Dept</span>'
+              : '<span class="cl-status in-house">In-House</span>';
 
         div.innerHTML =
           '<input type="checkbox"' + (item.arrived ? ' checked' : '') + ' onchange="toggleChecklistItem(this,' + idx + ')">' +
@@ -1168,14 +1669,15 @@
       updateChecklistProgress(CURRENT_STATE.checklist);
       /* Advance phase and auto-save */
       var allDone = checklistAllDone();
-      CURRENT_STATE._coordPhase = allDone ? 3 : 2;
+      /* Keep saved phase at 2 (Reviewed) until the approved PDF is actually exported */
+      CURRENT_STATE._coordPhase = 2;
       if (allDone) CURRENT_PHASE = 3;
       saveJobState(CURRENT_JOB_ID, CURRENT_STATE);
       renderPhase(CURRENT_PHASE);
     }
 
     function updateChecklistProgress(checklist) {
-      var done  = checklist.filter(function(i) { return i.arrived; }).length;
+      var done = checklist.filter(function (i) { return i.arrived; }).length;
       var total = checklist.length;
       document.getElementById('checklist-progress').textContent = done + ' / ' + total + ' complete';
       if (done === total) renderPhase(CURRENT_PHASE >= 2 ? CURRENT_PHASE : 2);
@@ -1183,7 +1685,7 @@
 
     function checklistAllDone() {
       if (!CURRENT_STATE || !CURRENT_STATE.checklist || CURRENT_STATE.checklist.length === 0) return false;
-      return CURRENT_STATE.checklist.every(function(i) { return i.arrived; });
+      return CURRENT_STATE.checklist.every(function (i) { return i.arrived; });
     }
 
     /* =============================================================
@@ -1202,13 +1704,9 @@
       if (!CURRENT_STATE) return;
       var btn = document.getElementById('btn-save-reviewed');
 
-      /* Collect state including fabric order tracking */
+      /* Collect state */
       var state = collectCoordState();
-      state.fabric = Object.assign({}, state.fabric || {});
-      state.fabric.dateOrdered       = document.getElementById('fabric-date-ordered').value;
-      state.fabric.po                = document.getElementById('fabric-po').value;
-      state.fabric.dateReceivedCoord = document.getElementById('fabric-date-received').value;
-      state.checklist   = buildChecklist(state);
+      state.checklist = buildChecklist(state);
       state._coordPhase = 2;
       saveJobState(state.jobOrder, state);
 
@@ -1218,8 +1716,8 @@
 
       /* Stage banner */
       var banner = document.getElementById('print-stage-banner');
-      banner.textContent = 'REVIEWED';
-      banner.className   = 'print-stage-banner reviewed';
+      banner.textContent = 'REVIEWED — ' + shortDate();
+      banner.className = 'print-stage-banner reviewed';
 
       /* Title → default PDF filename */
       var origTitle = document.title;
@@ -1236,8 +1734,8 @@
         window.removeEventListener('afterprint', onAP);
 
         /* Advance phase UI */
-        CURRENT_STATE   = state;
-        CURRENT_PHASE   = 2;
+        CURRENT_STATE = state;
+        CURRENT_PHASE = 2;
         REVIEW_OVERRIDE = false;
         cacheFormSectionVisibility();
         renderChecklist(state.checklist);
@@ -1269,8 +1767,8 @@
 
       /* Stage banner */
       var banner = document.getElementById('print-stage-banner');
-      banner.textContent = 'APPROVED';
-      banner.className   = 'print-stage-banner approved';
+      banner.textContent = 'APPROVED — ' + shortDate();
+      banner.className = 'print-stage-banner approved';
 
       /* Title → default PDF filename */
       var origTitle = document.title;
@@ -1286,11 +1784,14 @@
         btn.innerHTML = 'Save Approved PDF <i class="fa-solid fa-chevron-right"></i>';
         window.removeEventListener('afterprint', onAP);
 
-        /* Update state, remove from localStorage, advance phase */
-        CURRENT_STATE = state;
-        CURRENT_PHASE = 3;
+        /* Remove from active jobs, reset UI to drop zone */
         removeJobState(state.jobOrder);
-        renderPhase(3);
+        CURRENT_STATE = null;
+        CURRENT_JOB_ID = null;
+        CURRENT_PHASE = 1;
+        document.getElementById('main-sheet').style.display = 'none';
+        document.getElementById('upload-zone').style.display = '';
+        renderActiveJobs();
         showStatus('<i class="fa-solid fa-check"></i> Approved PDF saved — job is authorized for production', 'ok');
       });
 
@@ -1308,7 +1809,7 @@
       }
     };
 
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's')) {
         e.preventDefault();
         window.print();
@@ -1323,7 +1824,7 @@
       el.innerHTML = msg;
       el.className = 'status-msg ' + (type || 'ok');
       el.style.display = '';
-      setTimeout(function() { el.style.display = 'none'; }, 6000);
+      setTimeout(function () { el.style.display = 'none'; }, 6000);
     }
 
     /* =============================================================
@@ -1332,4 +1833,5 @@
     renderActiveJobs();
   </script>
 </body>
+
 </html>

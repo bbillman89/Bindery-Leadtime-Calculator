@@ -126,6 +126,7 @@
     /* ── SCREEN: hide print-only elements ── */
     #stateEmbed { display: none; }
     .print-date { display: none; }
+    .print-stage-banner { display: none; }
 
     /* ── @media print ──────────────────────────────────── */
     @media print {
@@ -227,6 +228,20 @@
 
       /* ── Print date span replaces date input ── */
       .print-date  { display: inline !important; font-size: 12px; color: var(--ink); }
+      .print-stage-banner {
+        display: block !important;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 20px;
+        align-self: center;
+        border: 1.5px solid;
+        background: var(--gold-tint);
+        color: var(--gold-dark);
+        border-color: var(--gold-dark);
+      }
       #date-received { display: none !important; }
 
       /* ── State embed: visible but white-on-white ── */
@@ -269,6 +284,7 @@
     <!-- TITLE BAR -->
     <div class="title">
       <span>Preproduction Materials List</span>
+      <div id="print-stage-banner" class="print-stage-banner"></div>
     </div>
 
     <div class="body">
@@ -1136,6 +1152,11 @@
       var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       document.getElementById('stateEmbed').textContent = '%%CS%%' + b64 + '%%CS%%';
 
+      /* Stage banner */
+      var now = new Date();
+      var dateStr = (now.getMonth()+1) + '/' + now.getDate() + '/' + String(now.getFullYear()).slice(2);
+      document.getElementById('print-stage-banner').textContent = 'PLANNED — ' + dateStr;
+
       /* Set document title → becomes the default PDF filename */
       var origTitle = document.title;
       document.title = state.jobOrder + ' Preproduction Planned';
@@ -1144,6 +1165,7 @@
         document.title = origTitle;
         document.getElementById('stateEmbed').textContent = '';
         document.getElementById('print-date').textContent = '';
+        document.getElementById('print-stage-banner').textContent = '';
         window.removeEventListener('afterprint', onAP);
         /* Remove exported draft and start fresh */
         if (CURRENT_PLANNER_JOB) removePlannerJob(CURRENT_PLANNER_JOB);
