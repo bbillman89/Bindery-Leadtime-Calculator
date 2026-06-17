@@ -5,440 +5,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Preproduction — Planner</title>
   <script src="https://kit.fontawesome.com/da08280601.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="shared.css">
   <style>
-    /* ── PALETTE ─────────────────────────────────────────────── */
-    :root {
-      --gold:      #C9A12C;
-      --gold-dark: #9C7A18;
-      --ink:       #262626;
-      --border:    #3A3A3A;
-      --line:      #C9A227;
-      --pad:       28px;
-      --p1-bg:     #f0f0f0;
-      --p1-label:  #555;
-      --p1-band:   #d8d8d8;
-      --calc-bg:   #fffce0;
-      --calc-label:#7a6500;
-      --calc-band: #f5e799;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #e9e7e0;
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      color: var(--ink);
-      font-size: 12px;
-    }
+    body { font-size: 12px; }
 
-    /* ── SHEET ── */
-    .sheet {
-      width: 11in;
-      min-height: 17in;
-      margin: 16px auto;
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0,0,0,.18);
-      position: relative;
-    }
-    .body { padding: var(--pad); }
+    /* ── PLANNER CARD INTERNALS ── */
+    .btype { margin-right: 20px; /* room for × button */ }
 
-    /* ── TITLE BAR ── */
-    .title {
-      background: var(--gold);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      padding: var(--pad);
-      padding-bottom: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 24px;
-    }
-    .title-right { display: flex; gap: 14px; align-items: flex-end; flex-shrink: 0; }
-
-    /* ── BAND HEADERS ── */
-    .band {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .09em;
-      text-transform: uppercase;
-      padding: 5px 10px;
-      margin: 12px 0 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .band.p1    { background: var(--p1-band);  color: #444; }
-    .band.calc  { background: var(--calc-band); color: var(--calc-label); }
-    .band.mixed { background: #e6e6e6; color: #444; }
-
-    .step-pill {
-      font-size: 9px; font-weight: 700; letter-spacing: .06em;
-      text-transform: uppercase; padding: 2px 7px; border-radius: 10px;
-    }
-    .step-pill.s1 { background: #bbb; color: #333; }
-    .step-pill.sc { background: var(--calc-label); color: #fff; }
-
-    /* ── INPUTS ── */
-    .lab {
-      font-size: 10px; font-weight: 700; letter-spacing: .03em;
-      text-transform: uppercase; white-space: nowrap; color: var(--ink);
-    }
-    .box {
-      border: 1.5px solid var(--border);
-      background: #fff; height: 26px;
-      padding: 3px 7px; font: inherit; font-size: 12px; border-radius: 2px;
-      transition: border-color .15s;
-    }
-    .box:hover  { border-color: var(--gold); }
-    .box:focus  { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,161,44,.35); }
-    .date-invalid { border-color: #c0392b !important; background: #fff5f5 !important; }
-
-    /* ── CATEGORY SELECT ── */
-    .cat-select {
-      border: 1.5px solid var(--border); background: #fff;
-      padding: 3px 7px; font: inherit; font-size: 12px;
-      border-radius: 2px; cursor: pointer; height: 26px;
-      transition: border-color .15s;
-    }
-    .cat-select:hover { border-color: var(--gold); }
-    .cat-select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,161,44,.35); }
-
-    /* ── LAYOUT ── */
-    .section { padding: 8px 0 12px; }
-    .frow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 5px 0; }
-    .input-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .divider { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
-
-    /* ── CHECKBOX / RADIO ── */
-    .copt {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11.5px; cursor: pointer; padding: 3px 6px;
-      border-radius: 4px; border: .5px solid transparent;
-      transition: background-color .15s, border-color .15s;
-    }
-    .copt:hover { background: #faf3d6; border-color: var(--gold); }
-    .copt input { accent-color: var(--ink); width: 13px; height: 13px; margin: 0; }
-
-    /* ── ADD BUTTONS ── */
-    .btnrow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 2px;
-    }
-    .addbtn {
-      border: 1px solid var(--gold);
-      background: rgba(201,161,44,.1);
-      color: var(--ink);
-      font: inherit;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      letter-spacing: .03em;
-      transition: background .15s, border-color .15s;
-    }
-    .addbtn:hover {
-      background: rgba(201,161,44,.22);
-      border-color: var(--gold-dark);
-    }
-    .addbtn:disabled {
-      opacity: .35;
-      cursor: default;
-      pointer-events: none;
-    }
-
-    /* Department toggles — same base, different active state */
-    .dept-toggle.active {
-      background: var(--ink);
-      color: #fff;
-      border-color: var(--ink);
-    }
-    .dept-toggle.active:hover {
-      background: #444;
-      border-color: #444;
-    }
-
-    /* ── CARDS ── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .brow {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 10px 12px 10px;
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.05);
-      position: relative;
-    }
-    .btype {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--gold-dark);
-      border-bottom: 1px solid #eeeeee;
-      padding-bottom: 6px;
-      margin-right: 20px; /* room for × button */
-    }
-    .card-field {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .card-field .box { width: 100%; height: 26px; }
+    .card-field { display: flex; flex-direction: column; gap: 3px; }
+    .card-field .box        { width: 100%; height: 26px; }
     .card-field .cat-select { width: 100%; }
-    .card-field-row {
-      display: flex;
-      gap: 6px;
-    }
+    .card-field-row         { display: flex; gap: 6px; }
     .card-field-row .card-field { flex: 1; }
 
-    /* hw fields inline */
-    .hw-inline {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: flex-end;
-    }
+    .hw-inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 
-    /* ── FLOATING LABELS ── */
-    .fl-wrap {
-      position: relative;
-      min-width: 0;
-    }
-    .fl-input {
-      display: block;
-      width: 100%;
-      height: 32px;
-      padding: 4px 8px 2px;
-      border: 1.5px solid var(--border);
-      background: #fff;
-      font: inherit;
-      font-size: 12px;
-      border-radius: 2px;
-      transition: border-color .15s;
-      outline: none;
-      box-sizing: border-box;
-    }
-    .fl-input:hover { border-color: var(--gold); }
-    .fl-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,161,44,.25); }
-    .fl-label {
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 11.5px;
-      color: #bbb;
-      pointer-events: none;
-      transition: top .16s ease, transform .16s ease, font-size .16s ease, color .16s ease;
-      background: #fff;
-      padding: 0 2px;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .fl-input:focus ~ .fl-label,
-    .fl-input:not(:placeholder-shown) ~ .fl-label {
-      top: 0;
-      transform: translateY(-50%);
-      font-size: 8.5px;
-      font-weight: 400;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--ink);
-    }
-
-    /* ── TOGGLE SWITCH ── */
-    .tog-group {
-      display: inline-flex;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
-    }
-    .tog-btn {
-      border: none; background: #f5f5f5; color: #666;
-      font: inherit; font-size: 11px; font-weight: 600;
-      padding: 4px 12px; cursor: pointer;
-      border-right: 1px solid var(--border);
-      transition: background .12s, color .12s;
-    }
-    .tog-btn:last-child { border-right: none; }
-    .tog-btn.active { background: var(--ink); color: #fff; }
-    .tog-btn:hover:not(.active) { background: #e8e8e8; }
-
-    /* ── REMOVE BUTTON ── */
-    .rm {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      padding: 2px 5px;
-      color: #c0392b;
-      border-radius: 3px;
-      transition: background-color .15s;
-    }
-    .rm:hover { background: rgba(192,57,43,.1); }
-
-    /* Inline row remove (not absolute) */
-    .row-rm {
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      padding: 3px 6px;
-      color: #c0392b;
-      border-radius: 3px;
-      flex-shrink: 0;
-      transition: background-color .15s;
-    }
-    .row-rm:hover { background: rgba(192,57,43,.1); }
-
-    /* Fabric row */
+    /* ── FABRIC ROW ── */
     .fabric-row {
       display: flex;
       gap: 6px;
       align-items: flex-end;
       flex-wrap: wrap;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--gray-50);
       padding-top: 8px;
       margin-top: 8px;
     }
-    .fabric-row:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
+    .fabric-row:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 
-    /* ── TIER BADGE ── */
-    .tier-badge {
-      border-radius: 6px; padding: 14px 18px;
-      display: flex; align-items: flex-start; gap: 28px; 
-      print-color-adjust: exact; -webkit-print-color-adjust: exact;
-    }
-    .tier-badge.none { background: #f0f0f0; border: 1.5px solid #ccc; }
-    .tier-badge.t1   { background: #e8f8f0; border: 1.5px solid #27ae60; }
-    .tier-badge.t2   { background: #edf4ff; border: 1.5px solid #2471a3; }
-    .tier-badge.t3   { background: #fff8e1; border: 1.5px solid #e6b800; }
-    .tier-badge.t4   { background: #fde8e8; border: 1.5px solid #c0392b; }
-    .tier-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
-    .tier-main  { font-size: 22px; font-weight: 800; line-height: 1; }
-    .tier-sub   { font-size: 11px; color: #666; margin-top: 3px; }
-    .tier-badge.none .tier-label,.tier-badge.none .tier-main { color: #888; }
-    .tier-badge.t1 .tier-label,.tier-badge.t1 .tier-main { color: #27ae60; }
-    .tier-badge.t2 .tier-label,.tier-badge.t2 .tier-main { color: #2471a3; }
-    .tier-badge.t3 .tier-label,.tier-badge.t3 .tier-main { color: #a07d00; }
-    .tier-badge.t4 .tier-label,.tier-badge.t4 .tier-main { color: #c0392b; }
-    .tier-factors-head { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #555; margin-bottom: 4px; }
-    .tier-reasons { list-style: disc; margin: 0 0 0 14px; padding: 0; }
-    .tier-reasons li { font-size: 11px; color: #444; margin: 2px 0; }
+    /* ── DEPARTMENT TOGGLE (active state) ── */
+    .dept-toggle.active       { background: var(--ink);      color: #fff; border-color: var(--ink); }
+    .dept-toggle.active:hover { background: var(--gray-700); color: #fff; border-color: var(--gray-700); }
 
-    .due-date-box {
-      border-radius: 6px;
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-width: 150px;
-      flex-shrink: 0;
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
-    }
-    /* Tier-matched colors — mirror .tier-badge rules */
-    .due-date-box.none { background: #f0f0f0; border: 1.5px solid #ccc; }
-    .due-date-box.t1   { background: #e8f8f0; border: 1.5px solid #27ae60; }
-    .due-date-box.t2   { background: #edf4ff; border: 1.5px solid #2471a3; }
-    .due-date-box.t3   { background: #fff8e1; border: 1.5px solid #e6b800; }
-    .due-date-box.t4   { background: #fde8e8; border: 1.5px solid #c0392b; }
+    /* ── DUE DATE BOX sizing (planner variant — wider) ── */
+    .due-date-box { min-width: 150px; flex-shrink: 0; }
 
-    .due-date-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .due-date-value {
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1;
-      text-align: center;
-    }
-    .due-date-box.none .due-date-label,
-    .due-date-box.none .due-date-value { color: #888; }
-    .due-date-box.t1 .due-date-label,
-    .due-date-box.t1 .due-date-value   { color: #27ae60; }
-    .due-date-box.t2 .due-date-label,
-    .due-date-box.t2 .due-date-value   { color: #2471a3; }
-    .due-date-box.t3 .due-date-label,
-    .due-date-box.t3 .due-date-value   { color: #a07d00; }
-    .due-date-box.t4 .due-date-label,
-    .due-date-box.t4 .due-date-value   { color: #c0392b; }
-
-    /* ── NOTES ── */
-    .notebox {
-      width: 100%; min-height: 60px; border: 1px solid var(--line);
-      background: #fff; padding: 7px 8px; font: inherit; font-size: 12px;
-      border-radius: 2px; resize: vertical;
-    }
-    .notebox:focus { outline: none; border-color: var(--gold); }
-
-    /* ── TOOLBAR ── */
-    .toolbar {
-      width: 11in; margin: 14px auto 6px;
-      display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    }
-    .toolbar-left  { display: flex; gap: 10px; align-items: center; }
-    .toolbar-right { display: flex; gap: 8px; align-items: center; }
-    .legend { display: flex; gap: 14px; align-items: center; font-size: 11px; }
-    .leg-dot { width: 12px; height: 12px; border-radius: 2px; display: inline-block; margin-right: 4px; }
-    .leg-p1   .leg-dot { background: var(--p1-band); }
-    .leg-calc .leg-dot { background: var(--calc-band); }
-    .legend span { display: inline-flex; align-items: center; }
-
-    .mode-pill {
-      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 4px 10px; border-radius: 12px; background: #ddd; color: #444;
-    }
-
-    .btn {
-      border: none; font: inherit; font-size: 11px; font-weight: 700;
-      padding: 7px 14px; border-radius: 5px; cursor: pointer;
-      letter-spacing: .03em; transition: filter .15s;
-    }
-    .btn:hover { filter: brightness(.9); }
-    .btn:disabled { opacity: .5; cursor: default; filter: none; }
-    .btn-gold { background: var(--gold); color: #fff; }
-    .btn-gray { background: #666; color: #fff; }
-    .btn-sm   { padding: 5px 10px; font-size: 10px; }
-
-    .back-link {
-      font-size: 11px; color: #888; text-decoration: none;
-      padding: 5px 8px; border-radius: 4px;
-      transition: background .15s;
-    }
-    .back-link:hover { background: rgba(0,0,0,.06); color: #444; }
-
+    /* ── EXPORT STATUS ── */
     #export-status {
-      font-size: 10px; color: var(--gold-dark); font-weight: 600;
-      padding: 4px 8px; border-radius: 4px; background: #fffce8;
+      font-size: 10px;
+      color: var(--gold-dark);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--gold-tint);
       display: none;
+    }
+
+    /* ── SCREEN: hide print-only elements ── */
+    #stateEmbed { display: none; }
+    .print-date { display: none; }
+
+    /* ── @media print ──────────────────────────────────── */
+    @media print {
+      @page { size: 11in 17in; margin: 0; }
+
+      /* Force colour accuracy */
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      body { background: white; }
+
+      /* Remove screen chrome */
+      .toolbar,
+      .btnrow,
+      .rm,
+      .row-rm,
+      #export-status,
+      #tier-warning { display: none !important; }
+
+      /* Sheet: no shadow, no margin */
+      .sheet { box-shadow: none !important; margin: 0 !important; }
+
+      /* ── Inputs → plain text ── */
+      .fl-input,
+      input.box,
+      textarea.notebox {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        resize: none !important;
+        padding: 2px 0 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+      }
+
+      /* Fabric unit select */
+      .cat-select {
+        border: none !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        padding: 0 !important;
+        height: auto !important;
+      }
+
+      /* Title bar inputs stay white on gold */
+      .title input.box {
+        color: #fff !important;
+      }
+
+      /* ── Floating labels: always show in "floated" position ── */
+      .fl-label {
+        top: 0 !important;
+        transform: translateY(-50%) !important;
+        font-size: 8.5px !important;
+        font-weight: 400 !important;
+        letter-spacing: .05em !important;
+        text-transform: uppercase !important;
+        color: var(--ink) !important;
+        background: transparent !important;
+      }
+
+      /* ── Toggle buttons: show only active ── */
+      .tog-btn:not(.active)     { display: none !important; }
+      .tog-group                { border: none !important; }
+      .tog-btn.active {
+        border: none !important;
+        background: transparent !important;
+        color: var(--ink) !important;
+        box-shadow: none !important;
+        padding: 2px 0 !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+      }
+
+      /* ── Dept toggles: show only active ── */
+      .dept-toggle:not(.active) { display: none !important; }
+      .dept-toggle.active {
+        border: none !important;
+        background: transparent !important;
+        color: var(--ink) !important;
+        box-shadow: none !important;
+        padding: 2px 4px !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+      }
+
+      /* ── Print date span replaces date input ── */
+      .print-date  { display: inline !important; font-size: 12px; color: var(--ink); }
+      #date-received { display: none !important; }
+
+      /* ── State embed: visible but white-on-white ── */
+      #stateEmbed {
+        display: block !important;
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        font-size: 4.5pt;
+        font-family: "Courier New", monospace;
+        color: #ffffff;
+        word-break: break-all;
+        line-height: 1.15;
+        padding: 0 24pt 4pt;
+        z-index: 0;
+      }
     }
   </style>
 </head>
@@ -453,37 +173,36 @@
     <div class="toolbar-right">
       <span id="export-status"></span>
       <button class="btn btn-gray btn-sm" onclick="exportDraft()">Save Draft</button>
-      <button class="btn btn-gold" id="btn-export-pdf" onclick="exportPDF()">Export Planned PDF <i class="fa-solid fa-chevron-right"></i></button>
+      <button class="btn btn-gold" id="btn-export-pdf" onclick="doSave()">Export Planned PDF <i class="fa-solid fa-chevron-right"></i></button>
     </div>
   </div>
 
   <div class="sheet">
     <!-- TITLE BAR -->
     <div class="title">
-      <span>Preproduction<br>Materials List</span>
-      <div class="title-right">
+      <span>Preproduction Materials List</span>
+    </div>
+
+    <div class="body">
+
+      <!-- JOB DETAILS ROW -->
+      <div class="frow" style="margin: 10px 0 4px; align-items:flex-end;">
         <div class="input-wrap">
-          <span class="lab" style="color:rgba(255,255,255,.7);">Job Order #</span>
+          <span class="lab">Job Order #</span>
           <input type="text" class="box" id="job-order" inputmode="numeric" maxlength="6"
                  placeholder="000000" style="width:100px;"
                  oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);">
         </div>
         <div class="input-wrap">
-          <span class="lab" style="color:rgba(255,255,255,.7);">Order Qty</span>
+          <span class="lab">Order Qty</span>
           <input type="text" class="box" id="order-qty" inputmode="numeric" style="width:80px;"
                  oninput="this.value=this.value.replace(/\D/g,''); updateTierUI();">
         </div>
-      </div>
-    </div>
-
-    <div class="body">
-
-      <!-- DATES -->
-      <div class="frow" style="margin: 10px 0 4px; align-items:flex-end;">
         <div class="input-wrap">
           <span class="lab">Date Received</span>
           <input type="date" class="box" id="date-received"
                  style="width:155px;" onchange="updateTierUI();">
+          <span class="print-date" id="print-date"></span>
         </div>
       </div>
 
@@ -521,6 +240,16 @@
           <button class="addbtn dept-toggle" id="dept-btn-woodshop" onclick="toggleDept('woodshop')">Wood Shop</button>
           <button class="addbtn dept-toggle" id="dept-btn-metal"    onclick="toggleDept('metal')">Metal Shop</button>
         </div>
+        <div id="metal-detail-card" class="brow" style="display:none; margin-top:8px; max-width:340px;">
+          <span class="btype">Metal Shop — Scope</span>
+          <div class="card-field">
+            <span class="lab">Scope</span>
+            <div class="tog-group" data-name="metal-scope">
+              <button class="tog-btn active" data-val="tipin" onclick="togClick(this); updateTierUI();">Tip In Only</button>
+              <button class="tog-btn"        data-val="full"  onclick="togClick(this); updateTierUI();">Full</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- INTERIOR COMPONENTS -->
@@ -529,9 +258,9 @@
       </div>
       <div class="section">
         <div class="btnrow">
-          <button class="addbtn" id="add-cb"      onclick="addInterior('cb')">+ Corner Boards</button>
-          <button class="addbtn" id="add-pockets" onclick="addInterior('pockets')">+ Pockets</button>
+          <button class="addbtn" id="add-cb"      onclick="addInterior('cb')">+ Corners</button>
           <button class="addbtn" id="add-tabs"    onclick="addInterior('tabs')">+ Tabs</button>
+          <button class="addbtn" id="add-pockets" onclick="addInterior('pockets')">+ Pockets</button>
         </div>
         <div class="card-grid" id="interior-cards"></div>
       </div>
@@ -561,7 +290,7 @@
           </div>
 
         </div>
-        <div style="display: flex; align-items:center; gap:6px; margin-top:8px; background:#ffdcb1; border:1px solid rgba(0,0,0,.25); border-radius:20px; padding:4px 12px; color: rgba(0,0,0,.75);">
+        <div id="tier-warning" style="display:flex; align-items:center; gap:6px; margin-top:8px; background:var(--tier-t3-bg); border:1px solid var(--tier-t3-border); border-radius:20px; padding:4px 12px; color:var(--tier-t3-text);">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <span>Tier assumes all materials in-house. May increase after Coordinator confirms availability.</span>
         </div>
@@ -574,9 +303,9 @@
       </div>
 
     </div><!-- /.body -->
+  <div id="stateEmbed"></div>
   </div><!-- /.sheet -->
 
-  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="reference/shared.js"></script>
   <script>
     /* =============================================================
@@ -599,7 +328,7 @@
       card.style.cssText = 'flex:1; max-width:30%;';
       card.innerHTML =
         '<span class="btype">Leather</span>' +
-        '<p style="margin:0; font-size:10px; color:#999; font-style:italic;">Specs specified in Menu Construction Sheet</p>' +
+        '<p style="margin:0; font-size:10px; color:var(--gray-400); font-style:italic;">Specs specified in Menu Construction Sheet</p>' +
         '<button class="rm" title="Remove" onclick="removeLeather()"><i class="fa-solid fa-xmark"></i></button>';
       document.getElementById('cover-cards').appendChild(card);
       document.getElementById('add-leather').disabled = true;
@@ -761,6 +490,10 @@
       var btn = document.getElementById('dept-btn-'+key);
       if (!btn) return;
       btn.classList.toggle('active');
+      if (key === 'metal') {
+        var card = document.getElementById('metal-detail-card');
+        if (card) card.style.display = btn.classList.contains('active') ? '' : 'none';
+      }
       updateTierUI();
     }
 
@@ -820,7 +553,7 @@
       var titles = { panels: true };
       if (type === 'cb') {
         card.innerHTML =
-          '<span class="btype">Corner Boards</span>' +
+          '<span class="btype">Corners</span>' +
           togFields('cb', titles) +
           '<button class="rm" title="Remove" onclick="removeInterior(\'cb\')"><i class="fa-solid fa-xmark"></i></button>';
       } else if (type === 'pockets') {
@@ -908,11 +641,13 @@
       var tabsCard    = document.getElementById('tabs-card');
       var interior = {
         cbInclude:      !!cbCard,
-        cbPanels:       cbCard ? ((document.querySelector('input[name="cb-panels"]:checked') || {}).value || '1-4') : null,
-        cbType:         cbCard ? ((document.querySelector('input[name="cb-type"]:checked')   || {}).value || 'std') : null,
+        cbPanels:       cbCard     ? (togVal('cb-panels')     || '1-4') : null,
+        cbType:         cbCard     ? (togVal('cb-type')       || 'std') : null,
         pocketsInclude: !!pocketsCard,
-        pocketsType:    pocketsCard ? ((document.querySelector('input[name="pockets-type"]:checked') || {}).value || 'std') : null,
-        tabsInclude:    !!tabsCard
+        pocketsType:    pocketsCard ? (togVal('pockets-type') || 'std') : null,
+        tabsInclude:    !!tabsCard,
+        tabsPanels:     tabsCard   ? (togVal('tabs-panels')   || '1-4') : null,
+        tabsType:       tabsCard   ? (togVal('tabs-type')     || 'std') : null
       };
 
       var tierResult = determineTierFromState({
@@ -939,7 +674,7 @@
         },
         hardware: hw,
         depts: depts,
-        metalTippin: false,
+        metalTippin: togVal('metal-scope') === 'tipin',
         deptsCompleted: {},
         interior: interior,
         notes: document.getElementById('notes-field').value
@@ -1059,18 +794,27 @@
           if (btn) btn.classList.add('active');
         }
       });
+      if (d.metal) {
+        var metalCard = document.getElementById('metal-detail-card');
+        if (metalCard) metalCard.style.display = '';
+        setTogVal('metal-scope', state.metalTippin ? 'tipin' : 'full');
+      }
 
       var ic = state.interior || {};
       if (ic.cbInclude) {
         addInterior('cb');
-        if (ic.cbPanels) { var r = document.querySelector('input[name="cb-panels"][value="'+ic.cbPanels+'"]'); if (r) r.checked = true; }
-        if (ic.cbType)   { var r = document.querySelector('input[name="cb-type"][value="'+ic.cbType+'"]');     if (r) r.checked = true; }
+        if (ic.cbPanels) setTogVal('cb-panels', ic.cbPanels);
+        if (ic.cbType)   setTogVal('cb-type',   ic.cbType);
       }
       if (ic.pocketsInclude) {
         addInterior('pockets');
-        if (ic.pocketsType) { var r = document.querySelector('input[name="pockets-type"][value="'+ic.pocketsType+'"]'); if (r) r.checked = true; }
+        if (ic.pocketsType) setTogVal('pockets-type', ic.pocketsType);
       }
-      if (ic.tabsInclude) addInterior('tabs');
+      if (ic.tabsInclude) {
+        addInterior('tabs');
+        if (ic.tabsPanels) setTogVal('tabs-panels', ic.tabsPanels);
+        if (ic.tabsType)   setTogVal('tabs-type',   ic.tabsType);
+      }
 
       document.getElementById('notes-field').value = state.notes || '';
       updateTierUI();
@@ -1090,37 +834,54 @@
     }
 
     /* =============================================================
-       EXPORT PLANNED PDF
+       EXPORT PLANNED PDF  (window.print approach)
     ============================================================= */
-    async function exportPDF() {
+    var _origPrint = window.print.bind(window);
+
+    function doSave() {
       var state = collectCurrentState();
       if (!state.jobOrder) { alert('Enter a Job Order # before exporting.'); return; }
 
-      var btn = document.getElementById('btn-export-pdf');
-      btn.disabled = true;
-      btn.textContent = 'Generating PDF…';
+      /* Update the print-date span so the date reads nicely in print */
+      var drVal = document.getElementById('date-received').value;
+      document.getElementById('print-date').textContent = isoToDisplay(drVal) || '—';
 
-      try {
-        var bytes    = await embedStatePDF(state, 'planned');
-        var filename = state.jobOrder + '-planned.pdf';
-        downloadPDF(bytes, filename);
-        var el = document.getElementById('export-status');
-        el.innerHTML = '<i class="fa-solid fa-check"></i> Exported ' + filename;
-        el.style.display = '';
-        setTimeout(function() { el.style.display = 'none'; }, 5000);
-      } catch(err) {
-        alert('PDF generation failed: ' + err.message);
-        console.error(err);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Export Planned PDF <i class="fa-solid fa-chevron-right"></i>';
-      }
+      /* Embed state as white-text base64 in the sheet footer */
+      var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      document.getElementById('stateEmbed').textContent = '%%CS%%' + b64 + '%%CS%%';
+
+      /* Set document title → becomes the default PDF filename */
+      var origTitle = document.title;
+      document.title = state.jobOrder + ' Preproduction Planned';
+
+      window.addEventListener('afterprint', function onAP() {
+        document.title = origTitle;
+        document.getElementById('stateEmbed').textContent = '';
+        document.getElementById('print-date').textContent = '';
+        window.removeEventListener('afterprint', onAP);
+      });
+
+      _origPrint();
     }
+
+    /* Intercept native print dialog */
+    window.print = doSave;
+
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's')) {
+        e.preventDefault();
+        doSave();
+      }
+    });
 
     /* =============================================================
        INIT
     ============================================================= */
     buildHwButtons();
+
+    /* Default date received to today */
+    document.getElementById('date-received').value = new Date().toISOString().slice(0, 10);
+    updateTierUI();
 
     /* Bookcloth vendor datalist */
     (function() {

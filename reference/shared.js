@@ -225,19 +225,22 @@ function determineTierFromState(state, mode) {
   if (d.offset)   escalate(2, 'Offset Print required');
   if (d.sewing)   escalate(2, 'Sewing required');
   if (d.metal) {
-    if (mode === 'coordinator' && state.metalTippin) escalate(2, 'Metal Shop — Tippin Only');
-    else if (mode === 'coordinator')                 escalate(3, 'Metal Shop — Full');
-    else                                             escalate(3, 'Metal Shop required (scope TBD by Coordinator)');
+    if (state.metalTippin) escalate(2, 'Metal Shop — Tip In Only');
+    else                   escalate(3, 'Metal Shop — Full');
   }
 
   /* Interior */
   var ic = state.interior || {};
   if (ic.cbInclude) {
-    if (ic.cbPanels === '5+')      escalate(3, 'Corner boards: 5+ panels');
-    if (ic.cbType   === 'nonstd')  escalate(3, 'Non-standard corner boards');
+    if (ic.cbPanels === '5+')      escalate(3, 'Corners: 5+ panels');
+    if (ic.cbType   === 'nonstd')  escalate(3, 'Corners: non-standard');
+  }
+  if (ic.tabsInclude) {
+    if (ic.tabsPanels === '5+')    escalate(3, 'Tabs: 5+ panels');
+    if (ic.tabsType   === 'nonstd') escalate(3, 'Tabs: non-standard');
   }
   if (ic.pocketsInclude) {
-    if (ic.pocketsType === 'nonstd') escalate(3, 'Non-standard pockets');
+    if (ic.pocketsType === 'nonstd') escalate(3, 'Pockets: non-standard');
   }
 
   return { tier: tier, reasons: reasons };
@@ -302,7 +305,7 @@ function buildChecklist(state) {
 
   /* Interior components */
   var ic = state.interior || {};
-  if (ic.cbInclude)      items.push({ id: 'int-cb',      label: 'Black Corner Boards — stage / pull', status: 'in-house', arrived: false });
+  if (ic.cbInclude)      items.push({ id: 'int-cb',      label: 'Corners — stage / pull', status: 'in-house', arrived: false });
   if (ic.pocketsInclude) items.push({ id: 'int-pockets', label: 'Pockets — stage / pull',             status: 'in-house', arrived: false });
   if (ic.tabsInclude)    items.push({ id: 'int-tabs',    label: 'Tabs — stage / pull',                status: 'in-house', arrived: false });
 
@@ -315,262 +318,426 @@ function buildChecklist(state) {
    Returns a Promise that resolves with the PDF bytes (Uint8Array).
 ================================================================= */
 async function embedStatePDF(state, pdfType) {
-  /* pdfType: 'planned' | 'reviewed' | 'approved' */
-  var { PDFDocument, rgb, StandardFonts, PDFName, PDFString } = PDFLib;
+  var { PDFDocument, rgb, StandardFonts } = PDFLib;
 
   var pdfDoc = await PDFDocument.create();
-  var page   = pdfDoc.addPage([792, 1224]); /* 11 × 17 at 72dpi */
+  var page   = pdfDoc.addPage([792, 1224]);
   var { width, height } = page.getSize();
 
   var fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   var fontReg  = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  /* ── Color palette ── */
-  var gold     = rgb(0.788, 0.631, 0.173);
-  var inkColor = rgb(0.149, 0.149, 0.149);
-  var grayBg   = rgb(0.941, 0.941, 0.941);
-  var greenBg  = rgb(0.102, 0.420, 0.235);
-  var yellowBg = rgb(0.478, 0.396, 0.0);
-  var white    = rgb(1, 1, 1);
-  var lightGray = rgb(0.85, 0.85, 0.85);
+  /* ── Greyscale palette ── */
+  var cInk     = rgb(0.149, 0.149, 0.149);
+  var cGray700 = rgb(0.267, 0.267, 0.267);
+  var cGray600 = rgb(0.333, 0.333, 0.333);
+  var cGray500 = rgb(0.400, 0.400, 0.400);
+  var cGray400 = rgb(0.533, 0.533, 0.533);
+  var cGray300 = rgb(0.667, 0.667, 0.667);
+  var cGray200 = rgb(0.733, 0.733, 0.733);
+  var cGray150 = rgb(0.800, 0.800, 0.800);
+  var cGray100 = rgb(0.867, 0.867, 0.867);
+  var cGray50  = rgb(0.933, 0.933, 0.933);
+  var cGray25  = rgb(0.957, 0.957, 0.957);
+  var cBand    = rgb(0.900, 0.900, 0.900);
+  var cWhite   = rgb(1, 1, 1);
 
-  var pad = 36;
-  var y   = height;
-
-  /* ── Banner ── */
-  var bannerColors = {
-    planned:  { bg: rgb(0.376, 0.376, 0.376), text: 'STEP 1 — PLANNED  |  Material Planner' },
-    reviewed: { bg: rgb(0.102, 0.420, 0.235), text: 'STEP 2 — REVIEWED  |  Coordinator Availability Assessment' },
-    approved: { bg: rgb(0.153, 0.502, 0.671), text: 'APPROVED — Authorized for Production' }
+  /* ── Tier badge colors — only colored element ── */
+  var cTier = {
+    t1: { bg: rgb(0.910, 0.969, 0.941), border: rgb(0.153, 0.682, 0.376), text: rgb(0.153, 0.682, 0.376) },
+    t2: { bg: rgb(0.929, 0.957, 1.000), border: rgb(0.141, 0.443, 0.639), text: rgb(0.141, 0.443, 0.639) },
+    t3: { bg: rgb(1.000, 0.973, 0.882), border: rgb(0.902, 0.722, 0.000), text: rgb(0.627, 0.490, 0.000) },
+    t4: { bg: rgb(0.992, 0.910, 0.910), border: rgb(0.753, 0.224, 0.169), text: rgb(0.753, 0.224, 0.169) }
   };
-  var banner = bannerColors[pdfType] || bannerColors.planned;
-  page.drawRectangle({ x: 0, y: height - 28, width: width, height: 28, color: banner.bg });
-  page.drawText(banner.text, { x: pad, y: height - 20, size: 9, font: fontBold, color: white });
 
-  y = height - 28;
+  var pad = 40;
+  var cW  = width - pad * 2;
+  var y   = height - pad;   /* start inside top margin */
 
-  /* ── Gold title bar ── */
-  page.drawRectangle({ x: 0, y: y - 56, width: width, height: 56, color: gold });
-  page.drawText('PREPRODUCTION MATERIALS LIST', { x: pad, y: y - 24, size: 18, font: fontBold, color: white });
-  page.drawText('Job Order #: ' + (state.jobOrder || '______'), { x: pad, y: y - 42, size: 10, font: fontReg, color: white });
-  page.drawText('Order Qty: ' + (state.orderQty || '—'), { x: 220, y: y - 42, size: 10, font: fontReg, color: white });
-  page.drawText('Date Received: ' + (state.dateReceived || '—'), { x: 350, y: y - 42, size: 10, font: fontReg, color: white });
-  page.drawText('Due Date: ' + (state.dueDateCalc || '—'), { x: 550, y: y - 42, size: 10, font: fontReg, color: white });
-  y -= 56;
-
-  /* ── Tier badge ── */
-  var tierColors = { t1: rgb(0.153, 0.682, 0.376), t2: rgb(0.141, 0.443, 0.639), t3: rgb(0.627, 0.502, 0.0), t4: rgb(0.753, 0.224, 0.169) };
   var ti = TIER_INFO[state.tierCalc] || TIER_INFO[1];
-  var tc = tierColors[ti.cls] || tierColors.t1;
-  page.drawRectangle({ x: pad, y: y - 38, width: width - pad * 2, height: 38, color: rgb(0.97, 0.97, 0.97), borderColor: tc, borderWidth: 1.5 });
-  page.drawText(ti.label, { x: pad + 10, y: y - 18, size: 13, font: fontBold, color: tc });
-  page.drawText(ti.days ? ti.days + ' work days' : 'To be determined', { x: pad + 10, y: y - 32, size: 9, font: fontReg, color: tc });
-  y -= 46;
+  var tc = cTier[ti.cls] || cTier.t1;
 
-  /* ── Section helper ── */
-  function sectionHeader(label, step, bgColor) {
+  /* ─────────────────────────────────────────────
+     HEADER — white background, no dark banner
+     Status shown as small pill next to title
+     ───────────────────────────────────────────── */
+
+  /* Status pill config */
+  var statusLabel = { planned: 'PLANNED', reviewed: 'REVIEWED', approved: 'APPROVED' }[pdfType] || 'PLANNED';
+  var statusSub   = { planned: 'Material Planning', reviewed: 'Availability Review', approved: 'Authorized for Production' }[pdfType] || '';
+
+  /* Title */
+  page.drawText('PREPRODUCTION MATERIALS LIST', { x: pad, y: y - 4, size: 18, font: fontBold, color: cInk });
+
+  /* Status pill (right-aligned, top row) */
+  var pillTxt = statusLabel;
+  var pillW   = fontBold.widthOfTextAtSize(pillTxt, 8) + 14;
+  var pillX   = width - pad - pillW;
+  var pillY   = y + 2;
+  page.drawRectangle({ x: pillX, y: pillY - 16, width: pillW, height: 16, color: cGray700 });
+  page.drawText(pillTxt, { x: pillX + 7, y: pillY - 12, size: 8, font: fontBold, color: cWhite });
+
+  /* Generation date under pill */
+  var stamp = 'Generated ' + todayString();
+  var stampW = fontReg.widthOfTextAtSize(stamp, 7);
+  page.drawText(stamp, { x: width - pad - stampW, y: pillY - 26, size: 7, font: fontReg, color: cGray300 });
+
+  y -= 28;
+
+  /* Job fields row */
+  var hFields = [
+    { label: 'JOB ORDER #', val: state.jobOrder     || '--' },
+    { label: 'QTY',         val: state.orderQty     || '--' },
+    { label: "DATE REC'D",  val: state.dateReceived || '--' }
+  ];
+  hFields.forEach(function(f, i) {
+    var fx = pad + i * 140;
+    page.drawText(f.val,   { x: fx, y: y - 4,  size: 11, font: fontBold, color: cInk });
+    page.drawText(f.label, { x: fx, y: y - 17, size: 7,  font: fontReg,  color: cGray400 });
+  });
+
+  y -= 28;
+
+  /* Header bottom rule */
+  page.drawLine({ start: { x: pad, y: y }, end: { x: width - pad, y: y }, thickness: 1.5, color: cInk });
+  y -= 20;
+
+  /* ─────────────────────────────────────────────
+     HELPERS
+     ───────────────────────────────────────────── */
+
+  /* Section band — INSET, not edge-to-edge */
+  function bandHeader(label) {
     y -= 6;
-    page.drawRectangle({ x: 0, y: y - 18, width: width, height: 18, color: bgColor || lightGray });
-    page.drawText(label.toUpperCase(), { x: pad, y: y - 13, size: 8, font: fontBold, color: inkColor });
-    if (step) page.drawText(step, { x: width - pad - fontBold.widthOfTextAtSize(step, 7), y: y - 13, size: 7, font: fontBold, color: inkColor });
-    y -= 22;
+    page.drawRectangle({ x: pad, y: y - 20, width: cW, height: 20, color: cBand });
+    page.drawText(label.toUpperCase(), { x: pad + 8, y: y - 14, size: 7.5, font: fontBold, color: cGray600 });
+    y -= 26;
   }
 
-  function row(label, value, labelColor, valueColor) {
-    if (y < 60) return; /* Basic overflow guard */
-    page.drawText(label, { x: pad + 4, y: y, size: 9, font: fontBold, color: labelColor || inkColor });
-    if (value) page.drawText(String(value), { x: 220, y: y, size: 9, font: fontReg, color: valueColor || inkColor });
-    y -= 14;
-  }
-
-  function subRow(label, value) {
+  /* Item heading */
+  function itemLabel(text) {
     if (y < 60) return;
-    page.drawText(label, { x: pad + 16, y: y, size: 8, font: fontReg, color: rgb(0.3, 0.3, 0.3) });
-    if (value) page.drawText(String(value), { x: 220, y: y, size: 8, font: fontReg, color: inkColor });
-    y -= 12;
+    page.drawText(text, { x: pad + 6, y: y, size: 10, font: fontBold, color: cInk });
+    y -= 17;
   }
 
-  /* ── Cover materials ── */
-  sectionHeader('Cover Materials', 'Step 1 — specs  |  Step 2 — availability');
-
-  if (state.leatherInclude) {
-    row('Leather', '', inkColor);
-    if (state.leatherStatus && pdfType !== 'planned') {
-      subRow('Availability:', state.leatherStatus === 'in-house' ? 'In-house and available' : state.leatherStatus === 'ordered-in-stock' ? 'Ordered — in-stock at vendor' : 'Ordered — NOT yet in-stock');
-    }
+  /* Spec detail row */
+  function subRow(lbl, val) {
+    if (y < 60 || !val) return;
+    page.drawText(lbl,         { x: pad + 18, y: y, size: 8, font: fontReg, color: cGray400 });
+    page.drawText(String(val), { x: pad + 130, y: y, size: 8, font: fontReg, color: cInk });
+    y -= 13;
   }
 
-  var fab = state.fabric || {};
-  if (fab.include) {
-    row('Fabric / Cover Material', '', inkColor);
-    if (fab.category) subRow('Type:', fab.category);
-    if (fab.family)   subRow('Family:', fab.family);
-    if (fab.qty)      subRow('Qty:', fab.qty + (fab.unit ? ' ' + fab.unit : ''));
-    /* Dynamic fields */
-    if (fab.fields) {
-      Object.keys(fab.fields).forEach(function(k) {
-        if (fab.fields[k]) subRow(k + ':', fab.fields[k]);
-      });
-    }
-    if (fab.status && pdfType !== 'planned') {
-      subRow('Availability:', fab.status === 'in-house' ? 'In-house and available' : fab.status === 'ordered-in-stock' ? 'Ordered — in-stock at vendor' : 'Ordered — NOT yet in-stock');
-      if ((fab.status === 'ordered-in-stock' || fab.status === 'not-in-stock') && fab.dateOrdered) subRow('Date Ordered:', fab.dateOrdered);
-      if ((fab.status === 'ordered-in-stock' || fab.status === 'not-in-stock') && fab.po)          subRow('PO #:', fab.po);
-    }
+  /* Separator between items in a section */
+  function itemSep() {
+    if (y < 60) return;
+    y -= 5;
+    page.drawLine({ start: { x: pad + 6, y: y }, end: { x: width - pad - 6, y: y }, thickness: 0.5, color: cGray100 });
+    y -= 8;
   }
 
-  /* ── Hardware ── */
+  /* Availability pill */
+  function availRow(statusVal) {
+    if (y < 60 || !statusVal) return;
+    var labels = { 'in-house': 'In-house and available', 'ordered-in-stock': 'Ordered -- in-stock at vendor', 'not-in-stock': 'Ordered -- NOT yet in-stock' };
+    var txt   = labels[statusVal] || statusVal;
+    var pillW = fontBold.widthOfTextAtSize(txt, 7) + 14;
+    page.drawRectangle({ x: pad + 18, y: y - 11, width: pillW, height: 13, color: cGray25, borderColor: cGray200, borderWidth: 0.75 });
+    page.drawText(txt, { x: pad + 25, y: y - 9, size: 7, font: fontBold, color: cGray600 });
+    y -= 19;
+  }
+
+  /* ─────────────────────────────────────────────
+     COVER MATERIALS
+     ───────────────────────────────────────────── */
+  var hasCover = state.leatherInclude || (state.fabric && state.fabric.include);
+  if (hasCover) {
+    bandHeader('Cover Materials');
+    if (state.leatherInclude) {
+      itemLabel('Leather');
+      if (pdfType !== 'planned') availRow(state.leatherStatus);
+      if (state.fabric && state.fabric.include) itemSep();
+    }
+    var fab = state.fabric || {};
+    if (fab.include) {
+      itemLabel('Fabric / Cover Material');
+      if (fab.category) subRow('Category:', fab.category);
+      if (fab.family)   subRow('Family:',   fab.family);
+      if (fab.rows && fab.rows.length > 0) {
+        fab.rows.forEach(function(r) {
+          if (r.vendor)      subRow('Vendor:',      r.vendor);
+          if (r.productLine) subRow('Product Line:', r.productLine);
+          if (r.color)       subRow('Color:',        r.color);
+          if (r.decoration)  subRow('Decoration:',   r.decoration);
+          if (r.qty)         subRow('Qty:',           r.qty + (r.unit ? ' ' + r.unit : ''));
+        });
+      } else if (fab.fields) {
+        Object.keys(fab.fields).forEach(function(k) { if (fab.fields[k]) subRow(k + ':', fab.fields[k]); });
+        if (fab.qty) subRow('Qty:', fab.qty + (fab.unit ? ' ' + fab.unit : ''));
+      }
+      if (pdfType !== 'planned') {
+        availRow(fab.status);
+        if ((fab.status === 'ordered-in-stock' || fab.status === 'not-in-stock') && fab.dateOrdered) subRow('Date Ordered:', fab.dateOrdered);
+        if ((fab.status === 'ordered-in-stock' || fab.status === 'not-in-stock') && fab.po)          subRow('PO #:', fab.po);
+      }
+    }
+    y -= 8;
+  }
+
+  /* ─────────────────────────────────────────────
+     HARDWARE & COMPONENTS
+     ───────────────────────────────────────────── */
   var activeHw = (state.hardware || []).filter(function(h) { return h.active; });
   if (activeHw.length > 0) {
-    sectionHeader('Hardware & Components', 'Step 1 — qty & specs  |  Step 2 — availability');
-    activeHw.forEach(function(hw) {
+    bandHeader('Hardware & Components');
+    activeHw.forEach(function(hw, i) {
       var mat = HW_MATERIALS.find(function(m) { return m.id === hw.id; });
-      var lbl = mat ? mat.label : hw.id;
-      var detail = (hw.fields || []).filter(Boolean).join('  ·  ');
-      row(lbl, detail || '');
-      if (hw.status && pdfType !== 'planned') {
-        var statusLabel = hw.status === 'in-house' ? 'In-house and available' : hw.status === 'ordered-in-stock' ? 'Ordered — in-stock at vendor' : 'Ordered — NOT yet in-stock';
-        subRow('Availability:', statusLabel);
+      itemLabel(mat ? mat.label : hw.id);
+      if (mat && mat.fields && hw.fields) {
+        mat.fields.forEach(function(f, fi) { if (hw.fields[fi]) subRow(f.ph + ':', hw.fields[fi]); });
       }
+      if (pdfType !== 'planned') availRow(hw.status);
+      if (i < activeHw.length - 1) itemSep();
     });
+    y -= 8;
   }
 
-  /* ── Departments ── */
+  /* ─────────────────────────────────────────────
+     PRODUCTION DEPARTMENTS
+     ───────────────────────────────────────────── */
   var d = state.depts || {};
   var activeDepts = Object.keys(d).filter(function(k) { return d[k]; });
   if (activeDepts.length > 0) {
-    sectionHeader('Production Departments', 'Step 1 — needed  |  Step 2 — completed');
+    bandHeader('Production Departments');
     var deptNames = { deboss: 'Deboss', offset: 'Offset Print', flatbed: 'Flatbed Print', sewing: 'Sewing', woodshop: 'Wood Shop', metal: 'Metal Shop' };
+    var chipCols = 3, chipGap = 10;
+    var chipW = (cW - chipGap * (chipCols - 1)) / chipCols;
+    var chipH = 28, chipCol = 0, chipRowY = y;
     activeDepts.forEach(function(k) {
-      var extra = (k === 'metal' && state.metalTippin) ? '  (Tippin Only)' : '';
-      var deptCompleted = state.deptsCompleted && state.deptsCompleted[k];
-      row(deptNames[k] + extra, pdfType !== 'planned' ? (deptCompleted ? '✓ Completed' : 'Pending') : '');
+      var cx = pad + chipCol * (chipW + chipGap);
+      var lbl = deptNames[k] || k;
+      if (k === 'metal' && state.metalTippin) lbl += ' (Tippin Only)';
+      page.drawRectangle({ x: cx, y: chipRowY - chipH, width: chipW, height: chipH, color: cGray25, borderColor: cGray200, borderWidth: 0.75 });
+      page.drawText(lbl, { x: cx + 10, y: chipRowY - 18, size: 9, font: fontBold, color: cGray700 });
+      chipCol++;
+      if (chipCol >= chipCols) { chipCol = 0; chipRowY -= (chipH + chipGap); }
     });
+    y = (chipCol > 0 ? chipRowY - chipH - chipGap : chipRowY) - 10;
   }
 
-  /* ── Interior ── */
+  /* ─────────────────────────────────────────────
+     INTERIOR COMPONENTS
+     ───────────────────────────────────────────── */
   var ic = state.interior || {};
   var hasInterior = ic.cbInclude || ic.pocketsInclude || ic.tabsInclude;
   if (hasInterior) {
-    sectionHeader('Interior Components', 'Step 1');
+    bandHeader('Interior Components');
     if (ic.cbInclude) {
-      row('Black Corner Boards', (ic.cbPanels ? ic.cbPanels + ' panels' : '') + (ic.cbType ? '  ·  ' + (ic.cbType === 'nonstd' ? 'Non-Standard' : 'Standard') : ''));
+      itemLabel('Black Corner Boards');
+      if (ic.cbPanels) subRow('Panels:', ic.cbPanels);
+      subRow('Type:', ic.cbType === 'nonstd' ? 'Non-Standard' : 'Standard');
+      if (ic.pocketsInclude || ic.tabsInclude) itemSep();
     }
-    if (ic.pocketsInclude) row('Pockets', ic.pocketsType === 'nonstd' ? 'Non-Standard' : 'Standard');
-    if (ic.tabsInclude)    row('Tabs', '');
+    if (ic.pocketsInclude) {
+      itemLabel('Pockets');
+      subRow('Type:', ic.pocketsType === 'nonstd' ? 'Non-Standard' : 'Standard');
+      if (ic.tabsInclude) itemSep();
+    }
+    if (ic.tabsInclude) itemLabel('Tabs');
+    y -= 8;
   }
 
-  /* ── Notes ── */
-  if (state.notes) {
-    sectionHeader('Notes', 'Step 1');
-    /* Word-wrap notes manually */
-    var words = state.notes.split(' ');
-    var line  = '', maxW = width - pad * 2 - 8;
-    words.forEach(function(w) {
-      var test = line ? line + ' ' + w : w;
-      if (fontReg.widthOfTextAtSize(test, 9) > maxW) {
-        if (y > 60) { page.drawText(line, { x: pad + 4, y: y, size: 9, font: fontReg, color: inkColor }); y -= 12; }
-        line = w;
-      } else {
-        line = test;
-      }
+  /* ─────────────────────────────────────────────
+     LEAD TIME — due date + tier badge, both tier-colored
+     ───────────────────────────────────────────── */
+  bandHeader('Lead Time Assessment');
+  var dueW = 130, rowH = 58, gapX = 12;
+  var tierBadgeW = cW - dueW - gapX;
+
+  page.drawRectangle({ x: pad, y: y - rowH, width: dueW, height: rowH, color: tc.bg, borderColor: tc.border, borderWidth: 1.5 });
+  page.drawText('DUE DATE', { x: pad + 10, y: y - 16, size: 7, font: fontBold, color: tc.text });
+  var dueVal = state.dueDateCalc || (state.dateReceived && ti.days ? addWorkdays(state.dateReceived, ti.days) : '--');
+  page.drawText(String(dueVal), { x: pad + 10, y: y - 40, size: 16, font: fontBold, color: tc.text });
+
+  var bx = pad + dueW + gapX;
+  page.drawRectangle({ x: bx, y: y - rowH, width: tierBadgeW, height: rowH, color: tc.bg, borderColor: tc.border, borderWidth: 1.5 });
+  page.drawText(ti.label, { x: bx + 14, y: y - 22, size: 15, font: fontBold, color: tc.text });
+  page.drawText(ti.days ? ti.days + ' Work Days' : 'To be determined', { x: bx + 14, y: y - 42, size: 10, font: fontReg, color: tc.text });
+  y -= rowH + 12;
+
+  /* ─────────────────────────────────────────────
+     NOTES
+     ───────────────────────────────────────────── */
+  if (state.notes && state.notes.trim()) {
+    bandHeader('Notes');
+    var nWords = state.notes.split(/\s+/);
+    var nLine = '', nMaxW = cW - 12;
+    nWords.forEach(function(w) {
+      var test = nLine ? nLine + ' ' + w : w;
+      if (fontReg.widthOfTextAtSize(test, 9) > nMaxW) {
+        if (y > 60) { page.drawText(nLine, { x: pad + 6, y: y, size: 9, font: fontReg, color: cGray700 }); y -= 14; }
+        nLine = w;
+      } else { nLine = test; }
     });
-    if (line && y > 60) { page.drawText(line, { x: pad + 4, y: y, size: 9, font: fontReg, color: inkColor }); y -= 14; }
+    if (nLine && y > 60) { page.drawText(nLine, { x: pad + 6, y: y, size: 9, font: fontReg, color: cGray700 }); y -= 14; }
+    y -= 8;
   }
 
-  /* ── Sign-off (approved only) ── */
-  if (pdfType === 'approved' && state.signoff) {
-    sectionHeader('Sign-Off', 'Step 2 — Coordinator', rgb(0.714, 0.886, 0.776));
-    row('Material Handler:', state.signoff.name || '');
-    row('Date:', state.signoff.date || '');
+  /* ─────────────────────────────────────────────
+     CHECKLIST (reviewed / approved)
+     ───────────────────────────────────────────── */
+  if ((pdfType === 'reviewed' || pdfType === 'approved') && state.checklist && state.checklist.length > 0) {
+    var cl = state.checklist;
+    var done = cl.filter(function(i) { return i.arrived; }).length;
+    bandHeader('Checklist');
+    var progTxt = done + ' / ' + cl.length + ' complete';
+    page.drawText(progTxt, { x: width - pad - fontBold.widthOfTextAtSize(progTxt, 8), y: y + 6, size: 8, font: fontBold, color: cGray400 });
+    var sPillLabels = { 'in-house': 'In-House', 'ordered-in-stock': 'Ordered', 'not-in-stock': 'Not in Stock', 'dept': 'Dept' };
+    cl.forEach(function(item) {
+      if (y < 60) return;
+      var cbS = 10;
+      if (item.arrived) {
+        page.drawRectangle({ x: pad + 6, y: y - cbS, width: cbS, height: cbS, color: cGray700 });
+        page.drawLine({ start: { x: pad + 7.5, y: y - 6 },   end: { x: pad + 9.5, y: y - 4 },  thickness: 1.2, color: cWhite });
+        page.drawLine({ start: { x: pad + 9.5, y: y - 4 },   end: { x: pad + 13.5, y: y - 9 }, thickness: 1.2, color: cWhite });
+      } else {
+        page.drawRectangle({ x: pad + 6, y: y - cbS, width: cbS, height: cbS, color: cWhite, borderColor: cGray300, borderWidth: 0.75 });
+      }
+      var sText = sPillLabels[item.status] || item.status;
+      var sPW   = fontBold.widthOfTextAtSize(sText, 7) + 10;
+      page.drawRectangle({ x: width - pad - sPW, y: y - 11, width: sPW, height: 13, color: cGray25, borderColor: cGray200, borderWidth: 0.5 });
+      page.drawText(sText, { x: width - pad - sPW + 5, y: y - 9, size: 7, font: fontBold, color: cGray600 });
+      page.drawText(item.label, { x: pad + 22, y: y, size: 9, font: fontReg, color: item.arrived ? cGray300 : cInk });
+      y -= 19;
+      page.drawLine({ start: { x: pad, y: y }, end: { x: width - pad, y: y }, thickness: 0.35, color: cGray100 });
+      y -= 5;
+    });
     y -= 6;
-    page.drawRectangle({ x: pad, y: y - 22, width: width - pad * 2, height: 22, color: rgb(0.914, 0.973, 0.933), borderColor: rgb(0.714, 0.886, 0.776), borderWidth: 1 });
-    page.drawText('ALL ORDER COMPONENTS IN-HOUSE — AUTHORIZED FOR PRODUCTION', { x: pad + 10, y: y - 15, size: 9, font: fontBold, color: rgb(0.102, 0.420, 0.235) });
-    y -= 28;
   }
 
-  /* ── Store state JSON in the PDF info dictionary (Subject field).
-       The info dict is never compressed, so it reads back cleanly
-       with pdfDoc.getSubject() regardless of PDF-lib version.      ── */
+  /* ─────────────────────────────────────────────
+     SIGN-OFF (approved only)
+     ───────────────────────────────────────────── */
+  if (pdfType === 'approved' && state.signoff) {
+    bandHeader('Sign-Off');
+    page.drawRectangle({ x: pad, y: y - 28, width: cW, height: 28, color: cGray25, borderColor: cGray300, borderWidth: 1.25 });
+    page.drawText('ALL ORDER COMPONENTS IN-HOUSE -- AUTHORIZED FOR PRODUCTION', { x: pad + 12, y: y - 18, size: 9, font: fontBold, color: cInk });
+    y -= 38;
+    subRow('Material Handler:', state.signoff.name || '--');
+    subRow('Date:', state.signoff.date || '--');
+    y -= 18;
+    page.drawLine({ start: { x: pad, y: y - 20 },       end: { x: pad + 220, y: y - 20 }, thickness: 1, color: cInk });
+    page.drawLine({ start: { x: pad + 240, y: y - 20 }, end: { x: pad + 340, y: y - 20 }, thickness: 1, color: cInk });
+    page.drawText('Signature', { x: pad,       y: y - 30, size: 7, font: fontReg, color: cGray300 });
+    page.drawText('Date',      { x: pad + 240, y: y - 30, size: 7, font: fontReg, color: cGray300 });
+  }
+
+  /* ─────────────────────────────────────────────
+     EMBED STATE JSON
+     ───────────────────────────────────────────── */
   var jsonStr = JSON.stringify(state);
   pdfDoc.setSubject('pp-state:' + jsonStr);
-
-  /* Also store as a visible attachment for PDF-viewer convenience,
-     but extraction does NOT depend on this. */
   try {
     var jsonBytes = new TextEncoder().encode(jsonStr);
     await pdfDoc.attach(jsonBytes, PDF_STATE_FILENAME, {
-      mimeType:    'application/json',
-      description: 'Preproduction form state',
-      creationDate: new Date(),
-      modificationDate: new Date()
+      mimeType: 'application/json', description: 'Preproduction form state',
+      creationDate: new Date(), modificationDate: new Date()
     });
-  } catch(e) { /* Non-critical — attachment is optional */ }
+  } catch(e) { /* Non-critical */ }
 
   return await pdfDoc.save();
 }
 
+
 /* =================================================================
    PDF STATE EXTRACTION
-   Reads the state JSON stored in the PDF info dictionary Subject field.
+   Supports two PDF formats:
+     A) New (@media print): state is base64-encoded between %%CS%% markers
+        in white text in the page body. Extracted via pdf.js (handles
+        compressed content streams).
+     B) Legacy (pdf-lib): state JSON is in the PDF Subject info field,
+        preceded by "pp-state:".
+
    Returns a Promise that resolves with the parsed state object,
    or rejects if no valid state is found.
-
-   Strategy:
-     1. pdfDoc.getSubject() — primary. Info dict is never compressed.
-     2. Raw-byte scan for the pp-state: marker in the PDF bytes
-        — handles edge cases where pdf-lib's getSubject() fails.
 ================================================================= */
-async function extractStateFromPDF(file) {
-  var { PDFDocument } = PDFLib;
-  var arrayBuffer = await file.arrayBuffer();
 
-  /* ── Strategy 1: PDF info dictionary Subject field (never compressed) ── */
-  try {
-    var pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-    var subject = pdfDoc.getSubject();
-    if (subject && subject.startsWith('pp-state:')) {
-      return JSON.parse(subject.slice(9));
-    }
-  } catch (e1) {
-    console.warn('Subject field read failed:', e1.message);
-  }
+/* Lazily loads pdf.js from CDN — called once, safe to call multiple times */
+var _pdfjsReady = false;
+function _ensurePdfJs(cb) {
+  if (_pdfjsReady) { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload = function () {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    _pdfjsReady = true;
+    cb();
+  };
+  s.onerror = function () { cb(new Error('Could not load PDF reader — check your internet connection.')); };
+  document.head.appendChild(s);
+}
 
-  /* ── Strategy 2: raw-byte scan for the pp-state: marker ── */
-  /* The Subject value is stored uncompressed in the PDF info dict */
-  var raw         = new Uint8Array(arrayBuffer);
-  var markerStr   = 'pp-state:{"version":';
-  var markerBytes = new TextEncoder().encode(markerStr);
+function extractStateFromPDF(file) {
+  return new Promise(function (resolve, reject) {
+    _ensurePdfJs(function (loadErr) {
+      if (loadErr) { reject(loadErr); return; }
 
-  for (var pos = 0; pos <= raw.length - markerBytes.length; pos++) {
-    var found = true;
-    for (var m = 0; m < markerBytes.length; m++) {
-      if (raw[pos + m] !== markerBytes[m]) { found = false; break; }
-    }
-    if (!found) continue;
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('Could not read file.')); };
+      reader.onload = function (ev) {
+        var data = new Uint8Array(ev.target.result);
 
-    /* Found the marker — scan from the { position for matching closing brace */
-    var jsonStart = pos + markerStr.indexOf('{');
-    var depth = 0, inStr = false, esc = false;
-    for (var k = jsonStart; k < raw.length; k++) {
-      var c = raw[k];
-      if (esc)               { esc = false; continue; }
-      if (c === 0x5C && inStr) { esc = true; continue; }  /* \ */
-      if (c === 0x22)        { inStr = !inStr; continue; } /* " */
-      if (inStr) continue;
-      if (c === 0x7B)        depth++;                       /* { */
-      else if (c === 0x7D) {                                /* } */
-        depth--;
-        if (depth === 0) {
-          try {
-            return JSON.parse(new TextDecoder().decode(raw.slice(jsonStart, k + 1)));
-          } catch (e2) { break; }
-        }
-      }
-    }
-  }
+        /* ── Strategy A: %%CS%%base64%%CS%% via pdf.js text extraction ── */
+        pdfjsLib.getDocument({ data: data }).promise
+          .then(function (pdf) {
+            var pageNums = [];
+            for (var i = 1; i <= pdf.numPages; i++) pageNums.push(i);
+            return Promise.all(pageNums.map(function (n) {
+              return pdf.getPage(n).then(function (p) { return p.getTextContent(); });
+            }));
+          })
+          .then(function (pages) {
+            var full = pages
+              .flatMap(function (p) { return p.items.map(function (it) { return it.str; }); })
+              .join('');
+            var m = full.match(/%%CS%%([\s\S]+?)%%CS%%/);
+            if (m) {
+              try {
+                var json = decodeURIComponent(escape(atob(m[1].replace(/\s/g, ''))));
+                resolve(JSON.parse(json));
+                return;
+              } catch (eA) {
+                console.warn('%%CS%% decode failed:', eA.message);
+              }
+            }
 
-  throw new Error('No state data found in this PDF. Make sure it was exported from the Preproduction tool.');
+            /* ── Strategy B: legacy pp-state: in Subject field ── */
+            if (typeof PDFLib !== 'undefined') {
+              PDFLib.PDFDocument.load(data.buffer, { ignoreEncryption: true })
+                .then(function (pdfDoc) {
+                  var subject = pdfDoc.getSubject();
+                  if (subject && subject.startsWith('pp-state:')) {
+                    try { resolve(JSON.parse(subject.slice(9))); return; }
+                    catch (eB) { /* fall through */ }
+                  }
+                  reject(new Error('No state data found in this PDF. Make sure it was exported from the Preproduction tool.'));
+                })
+                .catch(function () {
+                  reject(new Error('No state data found in this PDF. Make sure it was exported from the Preproduction tool.'));
+                });
+            } else {
+              reject(new Error('No state data found in this PDF. Make sure it was exported from the Preproduction tool.'));
+            }
+          })
+          .catch(function () {
+            reject(new Error('Could not parse this PDF.'));
+          });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  });
 }
 
 /* =================================================================

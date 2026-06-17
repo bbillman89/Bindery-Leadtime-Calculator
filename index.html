@@ -5,25 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Preproduction — Select Role</title>
   <script src="https://kit.fontawesome.com/da08280601.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="shared.css">
   <style>
-    :root {
-      --gold:      #C9A12C;
-      --gold-dark: #9C7A18;
-      --ink:       #262626;
-      --p2-bg:     #eafaf1;
-      --p2-label:  #1a6b3c;
-      --p2-band:   #b7e4c7;
-      --p1-bg:     #f0f0f0;
-      --p1-label:  #555;
-    }
-
-    * { box-sizing: border-box; }
-
     body {
-      margin: 0;
-      background: #e9e7e0;
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -39,11 +23,7 @@
       overflow: hidden;
     }
 
-    .card-header {
-      background: var(--gold);
-      padding: 28px 32px 20px;
-      color: #fff;
-    }
+    .card-header { background: var(--gold); padding: 28px 32px 20px; color: #fff; }
     .card-header h1 {
       margin: 0 0 4px;
       font-size: 20px;
@@ -51,22 +31,16 @@
       letter-spacing: .04em;
       text-transform: uppercase;
     }
-    .card-header p {
-      margin: 0;
-      font-size: 11px;
-      opacity: .8;
-      letter-spacing: .03em;
-    }
+    .card-header p { margin: 0; font-size: 11px; opacity: .8; letter-spacing: .03em; }
 
     .card-body { padding: 28px 32px 32px; }
-
     .card-body h2 {
       margin: 0 0 16px;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: #888;
+      color: var(--gray-400);
     }
 
     .role-grid {
@@ -77,7 +51,7 @@
     }
 
     .role-btn {
-      border: 2px solid #e0e0e0;
+      border: 2px solid var(--gray-75);
       background: #fff;
       border-radius: 8px;
       padding: 20px 16px;
@@ -90,17 +64,12 @@
     }
     .role-btn:hover {
       border-color: var(--gold);
-      box-shadow: 0 2px 8px rgba(201,161,44,.2);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--gold) 20%, transparent);
     }
     .role-btn.active-role {
       border-color: var(--gold);
-      background: #fffce8;
-      box-shadow: 0 2px 8px rgba(201,161,44,.25);
-    }
-    .role-btn.active-role.coord {
-      border-color: var(--p2-label);
-      background: var(--p2-bg);
-      box-shadow: 0 2px 8px rgba(26,107,60,.2);
+      background: var(--gold-tint);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--gold) 25%, transparent);
     }
 
     .role-icon { font-size: 22px; line-height: 1; }
@@ -111,11 +80,7 @@
       text-transform: uppercase;
       color: var(--ink);
     }
-    .role-desc {
-      font-size: 10px;
-      color: #888;
-      line-height: 1.4;
-    }
+    .role-desc { font-size: 10px; color: var(--gray-400); line-height: 1.4; }
 
     .proceed-btn {
       display: block;
@@ -133,24 +98,18 @@
       cursor: pointer;
       transition: filter .15s;
     }
-    .proceed-btn:hover { filter: brightness(.92); }
-    .proceed-btn:disabled { background: #ccc; cursor: default; filter: none; }
-    .proceed-btn.coord-go { background: var(--p2-label); }
+    .proceed-btn:hover    { filter: brightness(.92); }
+    .proceed-btn:disabled { background: var(--gray-150); cursor: default; filter: none; }
 
     .current-role-note {
       font-size: 10px;
-      color: #aaa;
+      color: var(--gray-300);
       text-align: center;
       margin-top: 14px;
     }
-    .current-role-note strong { color: #666; }
+    .current-role-note strong { color: var(--gray-500); }
 
-    .switch-note {
-      font-size: 10px;
-      color: #bbb;
-      text-align: center;
-      margin-top: 8px;
-    }
+    .switch-note { font-size: 10px; color: var(--gray-200); text-align: center; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -158,7 +117,6 @@
   <div class="card">
     <div class="card-header">
       <h1>Preproduction Materials List</h1>
-      <p>Select your role to continue. Your choice is saved to this browser.</p>
     </div>
     <div class="card-body">
       <h2>Who are you?</h2>
@@ -178,11 +136,6 @@
       <button class="proceed-btn" id="proceed-btn" disabled onclick="proceed()">
         Select a role to continue
       </button>
-
-      <p class="current-role-note" id="role-note" style="display:none;">
-        Your saved role: <strong id="saved-role-label"></strong> — select a different role above to switch.
-      </p>
-      <p class="switch-note">Each machine should use one role. Your selection persists across sessions.</p>
     </div>
   </div>
 
