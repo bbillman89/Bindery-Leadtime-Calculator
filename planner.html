@@ -20,17 +20,49 @@
 
     .hw-inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 
-    /* ── FABRIC ROW ── */
-    .fabric-row {
+    /* ── MATERIALS TABLE ── */
+    .mat-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .mat-table th {
+      text-align: left;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--gray-300);
+      padding: 0 6px 5px;
+      border-bottom: 1px solid var(--gray-100);
+      white-space: nowrap;
+    }
+    .mat-table td {
+      padding: 4px 6px;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--gray-50);
+    }
+    .mat-row:last-child td { border-bottom: none; }
+    .col-type  { width: 130px; }
+    .col-qty   { width: 64px; }
+    .col-unit  { width: 88px; }
+    .col-rm    { width: 26px; }
+    .mat-type-select { width: 100%; }
+    .mat-qty { width: 100%; height: 26px; text-align: right; }
+    .mat-unit { width: 100%; }
+    .fields-cell {
       display: flex;
       gap: 6px;
       align-items: flex-end;
-      flex-wrap: wrap;
-      border-top: 1px solid var(--gray-50);
-      padding-top: 8px;
-      margin-top: 8px;
     }
-    .fabric-row:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+    .fields-cell .fl-wrap { flex: 1; min-width: 70px; }
+    .fields-empty {
+      font-size: 11px;
+      color: var(--gray-200);
+      font-style: italic;
+      padding: 6px 0;
+    }
 
     /* ── DEPARTMENT TOGGLE (active state) ── */
     .dept-toggle.active       { background: var(--ink);      color: #fff; border-color: var(--ink); }
@@ -138,8 +170,10 @@
         min-height: 0 !important;
       }
 
-      /* Fabric unit select */
-      .cat-select {
+      /* Selects → plain text in print */
+      .cat-select,
+      .mat-type-select,
+      .mat-unit {
         border: none !important;
         background: transparent !important;
         -webkit-appearance: none !important;
@@ -147,6 +181,7 @@
         padding: 0 !important;
         height: auto !important;
       }
+      .mat-type-select { font-weight: 700; }
 
       /* Title bar inputs stay white on gold */
       .title input.box {
@@ -250,7 +285,7 @@
         <div class="input-wrap">
           <span class="lab">Order Qty</span>
           <input type="text" class="box" id="order-qty" inputmode="numeric" style="width:80px;"
-                 oninput="this.value=this.value.replace(/\D/g,''); updateTierUI();">
+                 oninput="this.value=this.value.replace(/\D/g,''); updateTierUI(); updateHwTotals();">
         </div>
         <div class="input-wrap">
           <span class="lab">Date Received</span>
@@ -261,24 +296,43 @@
       </div>
 
       <!-- COVER MATERIALS -->
-      <div class="band mixed">
-        Cover Materials
-      </div>
+      <div class="band mixed">Cover Materials</div>
       <div class="section">
-        <div class="btnrow">
-          <button class="addbtn" id="add-leather" onclick="addLeather()">+ Leather</button>
-          <button class="addbtn" id="add-fabric" onclick="addFabric()">+ Fabric / Cover Material</button>
+        <table class="mat-table">
+          <thead>
+            <tr>
+              <th class="col-type">Type</th>
+              <th>Details</th>
+              <th class="col-qty" style="text-align:right;">Qty</th>
+              <th class="col-unit">Unit</th>
+              <th class="col-rm"></th>
+            </tr>
+          </thead>
+          <tbody id="cover-mat-tbody"></tbody>
+        </table>
+        <div class="btnrow" style="margin-top:6px;">
+          <button class="addbtn" onclick="addCoverRow()">+ Add Material</button>
         </div>
-        <div id="cover-cards" style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; margin-top:8px;"></div>
       </div>
 
       <!-- HARDWARE -->
-      <div class="band mixed">
-        Hardware &amp; Components
-      </div>
+      <div class="band mixed">Hardware &amp; Components</div>
       <div class="section">
-        <div class="btnrow" id="hw-btnrow"></div>
-        <div class="card-grid" id="hw-cards"></div>
+        <table class="mat-table">
+          <thead>
+            <tr>
+              <th class="col-type">Type</th>
+              <th>Details</th>
+              <th class="col-qty" style="text-align:right;">Qty/ea</th>
+              <th class="col-qty" style="text-align:right;">Total Qty</th>
+              <th class="col-rm"></th>
+            </tr>
+          </thead>
+          <tbody id="hw-mat-tbody"></tbody>
+        </table>
+        <div class="btnrow" style="margin-top:6px;">
+          <button class="addbtn" onclick="addHwRow()">+ Add Component</button>
+        </div>
       </div>
 
       <!-- PRODUCTION DEPARTMENTS -->
@@ -372,169 +426,239 @@
     })();
 
     /* =============================================================
-       COVER MATERIALS
+       COVER MATERIALS — table view
     ============================================================= */
-    function addLeather() {
-      if (document.getElementById('leather-card-instance')) return;
-      var card = document.createElement('div');
-      card.className = 'brow';
-      card.id = 'leather-card-instance';
-      card.style.cssText = 'flex:1; max-width:30%;';
-      card.innerHTML =
-        '<span class="btype">Leather</span>' +
-        '<p style="margin:0; font-size:10px; color:var(--gray-400); font-style:italic;">Specs specified in Menu Construction Sheet</p>' +
-        '<button class="rm" title="Remove" onclick="removeLeather()"><i class="fa-solid fa-xmark"></i></button>';
-      document.getElementById('cover-cards').appendChild(card);
-      document.getElementById('add-leather').disabled = true;
-      updateTierUI();
+    var _coverRowN = 0;
+
+    var COVER_MATERIAL_TYPES = {
+      leather: {
+        label: 'Leather',
+        fields: [
+          { id: 'productLine', label: 'Product Line', list: 'dl-cov-lth-pl',
+            options: ['Water Buffalo','Matte Chrome Tanned Water Buffalo','Chrome Tanned Water Buffalo',
+                      'Bridle','Western Crunch','Oil Tan','Pioneer Chrome Tan','Mellowtan','Roughman','Napa Excel'] },
+          { id: 'weight', label: 'Weight', list: 'dl-cov-lth-wt',
+            options: ['2/3 oz.','3/4 oz.','4/5 oz.','5/6 oz.','6/7 oz.','8/9 oz.','9/10 oz.'] },
+          { id: 'color', label: 'Color' },
+          { id: 'id',    label: 'ID' }
+        ]
+      },
+      bookcloth: {
+        label: 'Bookcloth',
+        fields: [
+          { id: 'vendor', label: 'Vendor', list: 'dl-cov-bc-vendor',
+            options: ['Majilite','LBS','Fifield','KFL Synt3'] },
+          { id: 'productLine', label: 'Product Line' },
+          { id: 'color',       label: 'Color' },
+          { id: 'decoration',  label: 'Decoration' }
+        ]
+      }
+    };
+
+    function buildCoverFields(type, n) {
+      var def = COVER_MATERIAL_TYPES[type];
+      if (!def) return '<div class="fields-empty">Select a type to add details</div>';
+      var html = '<div class="fields-cell">';
+      def.fields.forEach(function(f) {
+        var uid = 'cov-' + n + '-' + f.id;
+        html +=
+          '<div class="fl-wrap">' +
+            '<input type="text" class="fl-input cov-field cov-f-' + f.id + '" placeholder=" " id="' + uid + '"' +
+            (f.list ? ' list="' + f.list + '"' : '') +
+            ' oninput="updateTierUI();">' +
+            '<label class="fl-label" for="' + uid + '">' + f.label + '</label>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
     }
 
-    function removeLeather() {
-      var card = document.getElementById('leather-card-instance');
-      if (card) card.remove();
-      document.getElementById('add-leather').disabled = false;
-      updateTierUI();
-    }
+    function addCoverRow(type, fields, qty, unit) {
+      var n   = _coverRowN++;
+      var tr  = document.createElement('tr');
+      tr.className = 'mat-row';
+      tr.innerHTML =
+        '<td class="col-type">' +
+          '<select class="mat-type-select" data-row="' + n + '" onchange="onCoverTypeChange(this)">' +
+            '<option value="">— Select —</option>' +
+            '<option value="leather"' + (type === 'leather'   ? ' selected' : '') + '>Leather</option>' +
+            '<option value="bookcloth"' + (type === 'bookcloth' ? ' selected' : '') + '>Bookcloth</option>' +
+          '</select>' +
+        '</td>' +
+        '<td class="col-fields" id="cov-fields-' + n + '">' + buildCoverFields(type || '', n) + '</td>' +
+        '<td class="col-qty"><input type="text" class="box mat-qty" inputmode="numeric" placeholder="0" value="' + (qty || '') + '" oninput="updateTierUI();"></td>' +
+        '<td class="col-unit">' +
+          '<select class="cat-select mat-unit">' +
+            '<option value="">Unit</option>' +
+            '<option value="yards"'  + (unit === 'yards'  ? ' selected' : '') + '>Yards</option>' +
+            '<option value="meters"' + (unit === 'meters' ? ' selected' : '') + '>Meters</option>' +
+          '</select>' +
+        '</td>' +
+        '<td class="col-rm"><button class="row-rm" title="Remove" onclick="removeCoverRow(this)"><i class="fa-solid fa-xmark"></i></button></td>';
+      document.getElementById('cover-mat-tbody').appendChild(tr);
 
-    function addFabric() {
-      if (document.getElementById('fabric-card-instance')) return;
-      var card = document.createElement('div');
-      card.className = 'brow';
-      card.id = 'fabric-card-instance';
-      card.style.cssText = 'flex:3;';
-      card.innerHTML =
-        '<span class="btype">Fabric / Cover Material</span>' +
-        '<div id="fabric-rows"></div>' +
-        '<div class="btnrow" style="margin-top:6px;">' +
-          '<button class="addbtn" style="font-size:10px; padding:4px 10px;" onclick="addFabricRow()">+ Add Row</button>' +
-        '</div>' +
-        '<button class="rm" title="Remove card" onclick="removeFabric()"><i class="fa-solid fa-xmark"></i></button>';
-      document.getElementById('cover-cards').appendChild(card);
-      document.getElementById('add-fabric').disabled = true;
-      addFabricRow(); /* start with one blank row */
-    }
-
-    function addFabricRow() {
-      var container = document.getElementById('fabric-rows');
-      if (!container) return;
-      var n = container.querySelectorAll('.fabric-row').length;
-      var row = document.createElement('div');
-      row.className = 'fabric-row';
-      row.innerHTML =
-        '<div class="fl-wrap" style="flex:1; min-width:80px;">' +
-          '<input type="text" class="fl-input fab-vendor" placeholder=" " list="dl-bc-vendor" id="fab-v-' + n + '">' +
-          '<label class="fl-label" for="fab-v-' + n + '">Vendor</label>' +
-        '</div>' +
-        '<div class="fl-wrap" style="flex:2; min-width:100px;">' +
-          '<input type="text" class="fl-input fab-product" placeholder=" " id="fab-p-' + n + '">' +
-          '<label class="fl-label" for="fab-p-' + n + '">Product Line</label>' +
-        '</div>' +
-        '<div class="fl-wrap" style="flex:1; min-width:70px;">' +
-          '<input type="text" class="fl-input fab-color" placeholder=" " id="fab-c-' + n + '">' +
-          '<label class="fl-label" for="fab-c-' + n + '">Color</label>' +
-        '</div>' +
-        '<div class="fl-wrap" style="flex:1; min-width:70px;">' +
-          '<input type="text" class="fl-input fab-decoration" placeholder=" " id="fab-d-' + n + '">' +
-          '<label class="fl-label" for="fab-d-' + n + '">Decoration</label>' +
-        '</div>' +
-        '<div class="fl-wrap" style="flex:none; width:72px;">' +
-          '<input type="text" class="fl-input fab-qty" placeholder=" " inputmode="numeric" id="fab-q-' + n + '">' +
-          '<label class="fl-label" for="fab-q-' + n + '">Qty</label>' +
-        '</div>' +
-        '<select class="cat-select fab-unit" style="width:86px; flex:none; height:32px; align-self:flex-end;">' +
-          '<option value="">Unit</option>' +
-          '<option value="yards">Yards</option>' +
-          '<option value="meters">Meters</option>' +
-        '</select>' +
-        '<button class="row-rm" title="Remove row" style="align-self:center;" onclick="removeFabricRow(this);"><i class="fa-solid fa-xmark"></i></button>';
-      container.appendChild(row);
-      updateTierUI();
-    }
-
-    function removeFabricRow(btn) {
-      var container = document.getElementById('fabric-rows');
-      var rows = container ? container.querySelectorAll('.fabric-row') : [];
-      var row = btn.closest('.fabric-row');
-      if (rows.length > 1) {
-        row.remove();
-      } else {
-        /* Last row — clear inputs instead of removing */
-        row.querySelectorAll('.fl-input').forEach(function(inp) { inp.value = ''; });
-        row.querySelector('.fab-unit').value = '';
+      /* Populate saved field values after the row is in the DOM */
+      if (fields && type && COVER_MATERIAL_TYPES[type]) {
+        COVER_MATERIAL_TYPES[type].fields.forEach(function(f) {
+          var inp = tr.querySelector('.cov-f-' + f.id);
+          if (inp && fields[f.id]) inp.value = fields[f.id];
+        });
       }
       updateTierUI();
     }
 
-    function removeFabric() {
-      var card = document.getElementById('fabric-card-instance');
-      if (card) card.remove();
-      document.getElementById('add-fabric').disabled = false;
+    function onCoverTypeChange(select) {
+      var n    = select.dataset.row;
+      var cell = document.getElementById('cov-fields-' + n);
+      if (cell) cell.innerHTML = buildCoverFields(select.value, n);
       updateTierUI();
+    }
+
+    function removeCoverRow(btn) {
+      var row = btn.closest('.mat-row');
+      if (row) row.remove();
+      updateTierUI();
+    }
+
+    function clearCoverTable() {
+      document.getElementById('cover-mat-tbody').innerHTML = '';
+    }
+
+    function collectCoverMaterials() {
+      var rows = [];
+      document.querySelectorAll('#cover-mat-tbody .mat-row').forEach(function(tr) {
+        var type   = tr.querySelector('.mat-type-select').value;
+        var qty    = tr.querySelector('.mat-qty').value;
+        var unit   = tr.querySelector('.mat-unit').value;
+        var fields = {};
+        if (type && COVER_MATERIAL_TYPES[type]) {
+          COVER_MATERIAL_TYPES[type].fields.forEach(function(f) {
+            var inp = tr.querySelector('.cov-f-' + f.id);
+            fields[f.id] = inp ? inp.value : '';
+          });
+        }
+        rows.push({ type: type, fields: fields, qty: qty, unit: unit });
+      });
+      return rows;
     }
 
     /* =============================================================
-       HARDWARE
+       HARDWARE — table view
     ============================================================= */
-    function buildHwButtons() {
-      var btnrow = document.getElementById('hw-btnrow');
-      HW_MATERIALS.forEach(function(mat) {
-        var btn = document.createElement('button');
-        btn.className = 'addbtn';
-        btn.id = 'hw-btn-' + mat.id;
-        btn.textContent = '+ ' + mat.label;
-        btn.onclick = function() { addHwCard(mat.id); };
-        btnrow.appendChild(btn);
-      });
-    }
+    var _hwRowN = 0;
 
-    function addHwCard(matId) {
-      if (document.querySelector('#hw-cards .brow[data-mat-id="'+matId+'"]')) return;
-      var mat = null;
-      for (var i = 0; i < HW_MATERIALS.length; i++) {
-        if (HW_MATERIALS[i].id === matId) { mat = HW_MATERIALS[i]; break; }
-      }
-      if (!mat) return;
+    var HW_PLANNER_CONFIG = [
+      { id: 'magnets',          label: 'Magnets',               fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
+      { id: 'elastic-cords',    label: 'Elastic Cords / Loops', fields: [{ id: 'style', label: 'Color / Style' }, { id: 'size', label: 'Size' }] },
+      { id: 'eyelets',          label: 'Eyelets',               fields: [{ id: 'size',  label: 'Size' },          { id: 'color', label: 'Color' }] },
+      { id: 'o-rings',          label: 'O-Rings',               fields: [{ id: 'desc',  label: 'Description' }] },
+      { id: 'ring-binder',      label: 'Ring Binder',           fields: [{ id: 'rings', label: '# of Rings' }, { id: 'color', label: 'Color' }, { id: 'size', label: 'Description / Size' }] },
+      { id: 'bands',            label: 'Bands',                 fields: [{ id: 'size',  label: 'Size' },          { id: 'color', label: 'Color' }] },
+      { id: 'clips',            label: 'Clips',                 fields: [{ id: 'color', label: 'Color' }] },
+      { id: 'romark',           label: 'Romark',                fields: [{ id: 'size',  label: 'Size' }, { id: 'color', label: 'Color' }, { id: 'thickness', label: 'Thickness' }] },
+      { id: 'rivets',           label: 'Rivets',                fields: [{ id: 'desc',  label: 'Description' }] },
+      { id: 'plastic-sleeves',  label: 'Plastic Sleeves',       fields: [{ id: 'type',  label: 'Type / Size' }] },
+      { id: 'snaps',            label: 'Snaps',                 fields: [{ id: 'line',  label: 'Line' }, { id: 'type', label: 'Type' }] },
+      { id: 'screw-posts',      label: 'Screw Posts',           fields: [{ id: 'color', label: 'Color' }, { id: 'size', label: 'Size' }] },
+      { id: 'custom-hardware',  label: 'Custom Hardware',       fields: [{ id: 'desc',  label: 'Description' }] }
+    ];
 
-      var fieldsHtml = '<div class="hw-inline">';
-      mat.fields.forEach(function(f, fi) {
-        var uid = 'hw-' + matId + '-' + fi;
-        /* Classify by label:
-           numeric → Qty / # of … → narrow fixed
-           wide    → Description  → full row
-           default → everything else → flex:1 */
-        var isNum  = /\bqty\b|# of/i.test(f.ph);
-        var isWide = /desc/i.test(f.ph);
-        var wrapStyle = isNum  ? 'flex:none; width:72px;'
-                      : isWide ? 'width:100%; flex:none;'
-                      : 'flex:1; min-width:80px;';
-        fieldsHtml +=
-          '<div class="fl-wrap" style="' + wrapStyle + '">' +
-            '<input type="text" class="fl-input hw-detail-input" placeholder=" " id="' + uid + '" oninput="updateTierUI();">' +
-            '<label class="fl-label" for="' + uid + '">' + f.ph + '</label>' +
+    /* Build a lookup map for quick access by id */
+    var HW_CONFIG_MAP = {};
+    HW_PLANNER_CONFIG.forEach(function(h) { HW_CONFIG_MAP[h.id] = h; });
+
+    /* Pre-build the type <option> list once */
+    var _hwTypeOptions = '<option value="">— Select —</option>' +
+      HW_PLANNER_CONFIG.map(function(h) {
+        return '<option value="' + h.id + '">' + h.label + '</option>';
+      }).join('');
+
+    function buildHwFields(type, n) {
+      var conf = HW_CONFIG_MAP[type];
+      if (!conf) return '<div class="fields-empty">Select a type to add details</div>';
+      var html = '<div class="fields-cell">';
+      conf.fields.forEach(function(f) {
+        var uid = 'hw-' + n + '-' + f.id;
+        html +=
+          '<div class="fl-wrap">' +
+            '<input type="text" class="fl-input hw-field hw-f-' + f.id + '" placeholder=" " id="' + uid + '" oninput="updateTierUI();">' +
+            '<label class="fl-label" for="' + uid + '">' + f.label + '</label>' +
           '</div>';
       });
-      fieldsHtml += '</div>';
+      html += '</div>';
+      return html;
+    }
 
-      var card = document.createElement('div');
-      card.className = 'brow';
-      card.dataset.matId = matId;
-      card.innerHTML =
-        '<span class="btype">' + mat.label + '</span>' +
-        fieldsHtml +
-        '<button class="rm" title="Remove" onclick="removeHwCard(\''+matId+'\');"><i class="fa-solid fa-xmark"></i></button>';
-      document.getElementById('hw-cards').appendChild(card);
+    function addHwRow(type, fields, qtyEa) {
+      var n  = _hwRowN++;
+      var tr = document.createElement('tr');
+      tr.className = 'mat-row';
+      tr.innerHTML =
+        '<td class="col-type">' +
+          '<select class="mat-type-select" data-row="' + n + '" onchange="onHwTypeChange(this)">' +
+            _hwTypeOptions.replace('value="' + (type || '') + '"', 'value="' + (type || '') + '" selected') +
+          '</select>' +
+        '</td>' +
+        '<td class="col-fields" id="hw-fields-' + n + '">' + buildHwFields(type || '', n) + '</td>' +
+        '<td class="col-qty">' +
+          '<input type="text" class="box mat-qty hw-qty-ea" inputmode="numeric" placeholder="0" value="' + (qtyEa || '') + '"' +
+          ' oninput="updateTierUI(); updateHwTotals();">' +
+        '</td>' +
+        '<td class="col-qty hw-total-qty" style="text-align:right; padding-right:8px; color:var(--gray-400);">—</td>' +
+        '<td class="col-rm"><button class="row-rm" title="Remove" onclick="removeHwRow(this)"><i class="fa-solid fa-xmark"></i></button></td>';
+      document.getElementById('hw-mat-tbody').appendChild(tr);
 
-      var btn = document.getElementById('hw-btn-'+matId);
-      if (btn) btn.disabled = true;
+      if (fields && type && HW_CONFIG_MAP[type]) {
+        HW_CONFIG_MAP[type].fields.forEach(function(f) {
+          var inp = tr.querySelector('.hw-f-' + f.id);
+          if (inp && fields[f.id]) inp.value = fields[f.id];
+        });
+      }
+      updateHwTotals();
       updateTierUI();
     }
 
-    function removeHwCard(matId) {
-      var card = document.querySelector('#hw-cards .brow[data-mat-id="'+matId+'"]');
-      if (card) card.remove();
-      var btn = document.getElementById('hw-btn-'+matId);
-      if (btn) btn.disabled = false;
+    function onHwTypeChange(select) {
+      var n    = select.dataset.row;
+      var cell = document.getElementById('hw-fields-' + n);
+      if (cell) cell.innerHTML = buildHwFields(select.value, n);
       updateTierUI();
+    }
+
+    function removeHwRow(btn) {
+      var row = btn.closest('.mat-row');
+      if (row) row.remove();
+      updateTierUI();
+    }
+
+    function clearHwTable() {
+      document.getElementById('hw-mat-tbody').innerHTML = '';
+    }
+
+    function updateHwTotals() {
+      var orderQty = parseInt(document.getElementById('order-qty').value) || 0;
+      document.querySelectorAll('#hw-mat-tbody .mat-row').forEach(function(tr) {
+        var qtyEa = parseInt(tr.querySelector('.hw-qty-ea').value) || 0;
+        var cell  = tr.querySelector('.hw-total-qty');
+        cell.textContent = (orderQty && qtyEa) ? (orderQty * qtyEa).toLocaleString() : '—';
+      });
+    }
+
+    function collectPlannerHardware() {
+      var rows = [];
+      document.querySelectorAll('#hw-mat-tbody .mat-row').forEach(function(tr) {
+        var type  = tr.querySelector('.mat-type-select').value;
+        var qtyEa = tr.querySelector('.hw-qty-ea').value;
+        var fields = {};
+        if (type && HW_CONFIG_MAP[type]) {
+          HW_CONFIG_MAP[type].fields.forEach(function(f) {
+            var inp = tr.querySelector('.hw-f-' + f.id);
+            fields[f.id] = inp ? inp.value : '';
+          });
+        }
+        rows.push({ type: type, fields: fields, qtyEa: qtyEa });
+      });
+      return rows;
     }
 
     /* =============================================================
@@ -651,31 +775,30 @@
     }
 
     function collectCurrentState() {
-      /* Cover materials */
-      var leatherInclude = !!document.getElementById('leather-card-instance');
-      var fabricCard     = document.getElementById('fabric-card-instance');
-      var fabricInclude  = !!fabricCard;
-      var fabricRows = [];
-      if (fabricCard) {
-        fabricCard.querySelectorAll('.fabric-row').forEach(function(row) {
-          fabricRows.push({
-            vendor:      row.querySelector('.fab-vendor').value,
-            productLine: row.querySelector('.fab-product').value,
-            color:       row.querySelector('.fab-color').value,
-            decoration:  row.querySelector('.fab-decoration').value,
-            qty:         row.querySelector('.fab-qty').value,
-            unit:        row.querySelector('.fab-unit').value
-          });
-        });
-      }
+      /* Cover materials — new table format */
+      var coverMaterials = collectCoverMaterials();
 
-      /* Hardware — maintain full indexed array for coordinator compatibility */
+      /* Derive backward-compat fields for tier calc + coordinator */
+      var leatherInclude = coverMaterials.some(function(r) { return r.type === 'leather'; });
+      var fabricRows     = coverMaterials
+        .filter(function(r) { return r.type === 'bookcloth'; })
+        .map(function(r) {
+          return { vendor: r.fields.vendor || '', productLine: r.fields.productLine || '',
+                   color: r.fields.color || '', decoration: r.fields.decoration || '',
+                   qty: r.qty, unit: r.unit };
+        });
+      var fabricInclude = fabricRows.length > 0;
+
+      /* Hardware — new table format */
+      var plannerHardware = collectPlannerHardware();
+
+      /* Derive backward-compat array for coordinator */
       var hw = [];
       HW_MATERIALS.forEach(function(mat) {
-        var card = document.querySelector('#hw-cards .brow[data-mat-id="'+mat.id+'"]');
-        if (card) {
-          var vals = [];
-          card.querySelectorAll('.hw-detail-input').forEach(function(inp) { vals.push(inp.value); });
+        var match = plannerHardware.filter(function(h) { return h.type === mat.id; });
+        if (match.length > 0) {
+          var conf = HW_CONFIG_MAP[mat.id];
+          var vals = conf ? conf.fields.map(function(f) { return match[0].fields[f.id] || ''; }) : [];
           hw.push({ id: mat.id, active: true,  fields: vals, status: 'in-house' });
         } else {
           hw.push({ id: mat.id, active: false, fields: [],   status: 'in-house' });
@@ -711,7 +834,7 @@
       }, 'planner');
 
       return {
-        version: 3,
+        version: 4,
         exportedAt: new Date().toISOString(),
         exportedBy: 'planner',
         jobOrder:     document.getElementById('job-order').value,
@@ -719,6 +842,7 @@
         dateReceived: isoToDisplay(document.getElementById('date-received').value),
         dueDateCalc:  document.getElementById('due-date-display').textContent,
         tierCalc:     tierResult.tier,
+        coverMaterials: coverMaterials,
         leatherInclude: leatherInclude,
         leatherStatus:  'in-house',
         fabric: {
@@ -726,6 +850,7 @@
           rows:    fabricRows,
           status:  'in-house'
         },
+        plannerHardware: plannerHardware,
         hardware: hw,
         depts: depts,
         metalTippin: togVal('metal-scope') === 'tipin',
@@ -744,7 +869,7 @@
       var info   = TIER_INFO[result.tier];
 
       var hasInput = state.orderQty ||
-        state.leatherInclude || state.fabric.include ||
+        (state.coverMaterials && state.coverMaterials.some(function(r) { return r.type; })) ||
         state.hardware.some(function(h) { return h.active; }) ||
         Object.values(state.depts).some(Boolean) ||
         state.interior.cbInclude || state.interior.pocketsInclude || state.interior.tabsInclude;
@@ -804,45 +929,43 @@
       document.getElementById('order-qty').value    = state.orderQty   || '';
       document.getElementById('date-received').value = displayToISO(state.dateReceived || '');
 
-      if (state.leatherInclude) addLeather();
-
-      if (state.fabric && state.fabric.include) {
-        addFabric(); /* creates card with first blank row auto-added */
-        var firstRow = document.querySelector('#fabric-rows .fabric-row');
-        if (state.fabric.rows && state.fabric.rows.length > 0) {
-          /* New multi-row format */
-          state.fabric.rows.forEach(function(r, i) {
-            if (i > 0) addFabricRow(); /* first row already exists */
-            var rows = document.querySelectorAll('#fabric-rows .fabric-row');
-            var rowEl = rows[i];
-            if (!rowEl) return;
-            rowEl.querySelector('.fab-vendor').value     = r.vendor      || '';
-            rowEl.querySelector('.fab-product').value    = r.productLine || '';
-            rowEl.querySelector('.fab-color').value      = r.color       || '';
-            rowEl.querySelector('.fab-decoration').value = r.decoration  || '';
-            rowEl.querySelector('.fab-qty').value        = r.qty         || '';
-            rowEl.querySelector('.fab-unit').value       = r.unit        || '';
+      /* Cover materials — new format (v4+) */
+      clearCoverTable();
+      if (state.coverMaterials && state.coverMaterials.length > 0) {
+        state.coverMaterials.forEach(function(r) {
+          addCoverRow(r.type, r.fields, r.qty, r.unit);
+        });
+      } else {
+        /* Legacy (v3 and below) — convert to new rows */
+        if (state.leatherInclude) addCoverRow('leather', {}, '', '');
+        if (state.fabric && state.fabric.include) {
+          (state.fabric.rows && state.fabric.rows.length > 0
+            ? state.fabric.rows
+            : [state.fabric.fields ? Object.assign({}, state.fabric.fields, { qty: state.fabric.qty, unit: state.fabric.unit }) : {}]
+          ).forEach(function(r) {
+            addCoverRow('bookcloth',
+              { vendor: r.vendor || '', productLine: r.productLine || '', color: r.color || '', decoration: r.decoration || '' },
+              r.qty || '', r.unit || '');
           });
-        } else if (firstRow) {
-          /* Legacy format — populate first row from old fields */
-          var f = state.fabric.fields || {};
-          firstRow.querySelector('.fab-vendor').value     = f.vendor      || '';
-          firstRow.querySelector('.fab-product').value    = f.productLine || '';
-          firstRow.querySelector('.fab-color').value      = f.color       || '';
-          firstRow.querySelector('.fab-decoration').value = f.decoration  || '';
-          firstRow.querySelector('.fab-qty').value        = state.fabric.qty  || '';
-          firstRow.querySelector('.fab-unit').value       = state.fabric.unit || '';
         }
       }
 
-      (state.hardware || []).forEach(function(hw) {
-        if (!hw.active) return;
-        addHwCard(hw.id);
-        var card = document.querySelector('#hw-cards .brow[data-mat-id="'+hw.id+'"]');
-        if (!card) return;
-        var inputs = card.querySelectorAll('.hw-detail-input');
-        (hw.fields || []).forEach(function(val, i) { if (inputs[i]) inputs[i].value = val; });
-      });
+      /* Hardware — new format */
+      clearHwTable();
+      if (state.plannerHardware && state.plannerHardware.length > 0) {
+        state.plannerHardware.forEach(function(h) {
+          addHwRow(h.type, h.fields, h.qtyEa);
+        });
+      } else {
+        /* Legacy: convert old indexed hardware array */
+        (state.hardware || []).forEach(function(hw) {
+          if (!hw.active) return;
+          var conf = HW_CONFIG_MAP[hw.id];
+          var fields = {};
+          if (conf) conf.fields.forEach(function(f, i) { fields[f.id] = (hw.fields || [])[i] || ''; });
+          addHwRow(hw.id, fields, '');
+        });
+      }
 
       var d = state.depts || {};
       ['deboss','offset','flatbed','sewing','woodshop','metal'].forEach(function(k) {
@@ -949,12 +1072,11 @@
       document.getElementById('order-qty').value     = '';
       document.getElementById('date-received').value = new Date().toISOString().slice(0, 10);
 
-      /* Remove all cover material cards */
-      removeLeather();
-      removeFabric();
+      /* Clear cover materials table */
+      clearCoverTable();
 
-      /* Remove all hardware cards */
-      HW_MATERIALS.forEach(function(mat) { removeHwCard(mat.id); });
+      /* Clear hardware table */
+      clearHwTable();
 
       /* Clear department toggles */
       ['deboss','offset','flatbed','sewing','woodshop','metal'].forEach(function(k) {
@@ -1044,8 +1166,6 @@
     /* =============================================================
        INIT
     ============================================================= */
-    buildHwButtons();
-
     /* Default date received to today */
     document.getElementById('date-received').value = new Date().toISOString().slice(0, 10);
     updateTierUI();
@@ -1053,14 +1173,22 @@
     /* Show any saved drafts from a previous session */
     renderPlannerChips();
 
-    /* Bookcloth vendor datalist */
+    /* Build datalists for all cover material autocomplete fields */
     (function() {
-      var dl = document.createElement('datalist');
-      dl.id = 'dl-bc-vendor';
-      ['Majilite','LBS','Fifield','KFL Synt3'].forEach(function(v) {
-        var o = document.createElement('option'); o.value = v; dl.appendChild(o);
+      var seen = {};
+      Object.values(COVER_MATERIAL_TYPES).forEach(function(def) {
+        def.fields.forEach(function(f) {
+          if (f.list && f.options && !seen[f.list]) {
+            seen[f.list] = true;
+            var dl = document.createElement('datalist');
+            dl.id = f.list;
+            f.options.forEach(function(v) {
+              var o = document.createElement('option'); o.value = v; dl.appendChild(o);
+            });
+            document.body.appendChild(dl);
+          }
+        });
       });
-      document.body.appendChild(dl);
     })();
   </script>
 </body>
