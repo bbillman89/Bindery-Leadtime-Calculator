@@ -187,6 +187,7 @@
       font-size: 9px; font-weight: 700; letter-spacing: .05em;
       text-transform: uppercase; padding: 1px 5px; border-radius: 8px;
     }
+    .phase-planned  { background: var(--gold-tint);   color: var(--gold-dark); }
     .phase-reviewed { background: var(--section-band);  color: var(--section-label); }
     .phase-approved { background: #cce5ff;          color: var(--tier-t2-text); }
 
@@ -362,7 +363,7 @@
         Save Reviewed PDF <i class="fa-solid fa-chevron-right"></i>
       </button>
       <!-- Phase 3 button -->
-      <button class="btn btn-blue" id="btn-save-approved" onclick="doSaveApproved()" style="display:none;" disabled>
+      <button class="btn btn-gold" id="btn-save-approved" onclick="doSaveApproved()" style="display:none;" disabled>
         Save Approved PDF <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
@@ -686,8 +687,8 @@
         var s = loadJobState(id);
         if (!s) return;
         var phase  = s._coordPhase || 1;
-        var pLabel = phase >= 3 ? 'Approved' : phase === 2 ? 'Checklist' : 'Reviewed';
-        var pClass = phase >= 3 ? 'phase-approved' : 'phase-reviewed';
+        var pLabel = phase >= 3 ? 'Approved' : phase === 2 ? 'Checklist' : 'Planned';
+        var pClass = phase >= 3 ? 'phase-approved' : phase === 2 ? 'phase-reviewed' : 'phase-planned';
         var chip   = document.createElement('div');
         chip.className = 'job-chip';
         chip.innerHTML = '<span class="job-chip-id">' + id + '</span>' +
@@ -773,6 +774,12 @@
       CURRENT_STATE  = state;
       CURRENT_JOB_ID = state.jobOrder;
       CURRENT_PHASE  = state._coordPhase || 1;
+
+      /* Register job in active jobs list the moment it's opened */
+      if (state.jobOrder) {
+        saveJobState(state.jobOrder, state);
+        renderActiveJobs();
+      }
 
       /* Hide upload zone, show sheet */
       document.getElementById('upload-zone').style.display = 'none';

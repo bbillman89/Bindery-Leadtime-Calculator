@@ -50,6 +50,47 @@
       display: none;
     }
 
+    /* ── ACTIVE DRAFTS PANEL ── */
+    #planner-active-jobs {
+      display: none;
+      width: 11in;
+      margin: auto;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    #planner-active-jobs-list { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0; }
+    .new-draft-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: 1px dashed var(--gray-200);
+      border-radius: 4px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin: 3px;
+      color: var(--gray-300); transition: border-color .15s, color .15s;
+    }
+    .new-draft-btn:hover { border-color: var(--section-label); color: var(--ink); }
+    
+    .job-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--gray-25); border: 1px solid var(--gray-100);
+      border-radius: 4px; padding: 5px 10px; font-size: 11px; cursor: pointer; margin: 3px;
+      transition: background .15s;
+    }
+    .job-chip:hover   { background: var(--section-bg); border-color: var(--section-label); }
+    .job-chip.active  { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .job-chip.active:hover { background: var(--gray-700); border-color: var(--gray-700); }
+    .job-chip.active .phase-draft { background: rgba(255,255,255,.18); color: #fff; }
+    .job-chip-id      { font-weight: 700; }
+    .job-chip-phase {
+      font-size: 9px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; padding: 1px 5px; border-radius: 8px;
+    }
+    .phase-draft { background: var(--gold-tint); color: var(--gold-dark); }
+    .chip-dismiss {
+      background: none; border: none; padding: 0; margin-left: 2px;
+      cursor: pointer; opacity: .45; font-size: 10px; line-height: 1;
+      color: inherit;
+    }
+    .chip-dismiss:hover { opacity: 1; }
+
     /* ── SCREEN: hide print-only elements ── */
     #stateEmbed { display: none; }
     .print-date { display: none; }
@@ -69,10 +110,17 @@
       .rm,
       .row-rm,
       #export-status,
-      #tier-warning { display: none !important; }
+      #tier-warning,
+      #planner-active-jobs { display: none !important; }
 
       /* Sheet: no shadow, no margin */
       .sheet { box-shadow: none !important; margin: 0 !important; }
+
+      .title{
+        background-color: white !important;
+        padding-bottom: 0;
+        color: black;
+      }
 
       /* ── Inputs → plain text ── */
       .fl-input,
@@ -172,9 +220,14 @@
     </div>
     <div class="toolbar-right">
       <span id="export-status"></span>
-      <button class="btn btn-gray btn-sm" onclick="exportDraft()">Save Draft</button>
       <button class="btn btn-gold" id="btn-export-pdf" onclick="doSave()">Export Planned PDF <i class="fa-solid fa-chevron-right"></i></button>
     </div>
+  </div>
+
+  <!-- ACTIVE DRAFTS PANEL -->
+  <div id="planner-active-jobs">
+    <div id="planner-active-jobs-list"></div>
+    <button class="new-draft-btn" onclick="newDraft()"><i class="fa-solid fa-plus"></i> New Draft</button>
   </div>
 
   <div class="sheet">
@@ -191,7 +244,8 @@
           <span class="lab">Job Order #</span>
           <input type="text" class="box" id="job-order" inputmode="numeric" maxlength="6"
                  placeholder="000000" style="width:100px;"
-                 oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);">
+                 oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"
+                 onblur="onJobOrderBlur(this.value);">
         </div>
         <div class="input-wrap">
           <span class="lab">Order Qty</span>
@@ -736,6 +790,9 @@
       else { ddEl.textContent = addWorkdays(dr, info.days); }
 
       state.dueDateCalc = ddEl.textContent;
+
+      /* Auto-save to planner drafts whenever a job is active */
+      if (CURRENT_PLANNER_JOB) savePlannerJob(CURRENT_PLANNER_JOB, state);
     }
 
     /* =============================================================
@@ -821,16 +878,123 @@
     }
 
     /* =============================================================
-       EXPORT DRAFT
+       PLANNER-SPECIFIC LOCALSTORAGE  (separate from coordinator)
     ============================================================= */
-    function exportDraft() {
-      var state = collectCurrentState();
-      if (!state.jobOrder) { alert('Enter a Job Order # before saving a draft.'); return; }
-      saveJobState(state.jobOrder, state);
-      var el = document.getElementById('export-status');
-      el.innerHTML = '<i class="fa-solid fa-check"></i> Draft saved';
-      el.style.display = '';
-      setTimeout(function() { el.style.display = 'none'; }, 3000);
+    var LS_PLANNER_PREFIX = 'pp_planner_job_';
+    var LS_PLANNER_ACTIVE = 'pp_planner_active_jobs';
+    var CURRENT_PLANNER_JOB = null;
+
+    function savePlannerJob(jobOrder, state) {
+      localStorage.setItem(LS_PLANNER_PREFIX + jobOrder, JSON.stringify(state));
+      var ids = getPlannerJobIds();
+      if (ids.indexOf(jobOrder) === -1) ids.push(jobOrder);
+      localStorage.setItem(LS_PLANNER_ACTIVE, JSON.stringify(ids));
+    }
+
+    function loadPlannerJob(jobOrder) {
+      var raw = localStorage.getItem(LS_PLANNER_PREFIX + jobOrder);
+      return raw ? JSON.parse(raw) : null;
+    }
+
+    function getPlannerJobIds() {
+      var raw = localStorage.getItem(LS_PLANNER_ACTIVE);
+      return raw ? JSON.parse(raw) : [];
+    }
+
+    function removePlannerJob(jobOrder) {
+      localStorage.removeItem(LS_PLANNER_PREFIX + jobOrder);
+      var ids = getPlannerJobIds().filter(function(id) { return id !== jobOrder; });
+      localStorage.setItem(LS_PLANNER_ACTIVE, JSON.stringify(ids));
+    }
+
+    /* =============================================================
+       ACTIVE DRAFTS PANEL
+    ============================================================= */
+    function renderPlannerChips() {
+      var ids    = getPlannerJobIds();
+      var panel  = document.getElementById('planner-active-jobs');
+      var list   = document.getElementById('planner-active-jobs-list');
+      list.innerHTML = '';
+      if (ids.length === 0) { panel.style.display = 'none'; return; }
+      panel.style.display = 'flex';
+      ids.forEach(function(id) {
+        var chip = document.createElement('div');
+        chip.className = 'job-chip' + (id === CURRENT_PLANNER_JOB ? ' active' : '');
+        chip.innerHTML =
+          '<span class="job-chip-id">' + id + '</span>' +
+          '<span class="job-chip-phase phase-draft">Draft</span>' +
+          '<button class="chip-dismiss" title="Delete draft"><i class="fa-solid fa-xmark"></i></button>';
+        chip.addEventListener('click', function(e) {
+          if (e.target.closest('.chip-dismiss')) {
+            dismissPlannerDraft(id);
+          } else {
+            resumePlannerJob(id);
+          }
+        });
+        list.appendChild(chip);
+      });
+    }
+
+    function dismissPlannerDraft(id) {
+      removePlannerJob(id);
+      if (CURRENT_PLANNER_JOB === id) CURRENT_PLANNER_JOB = null;
+      renderPlannerChips();
+    }
+
+    function newDraft() {
+      CURRENT_PLANNER_JOB = null;
+
+      /* Clear header fields */
+      document.getElementById('job-order').value     = '';
+      document.getElementById('order-qty').value     = '';
+      document.getElementById('date-received').value = new Date().toISOString().slice(0, 10);
+
+      /* Remove all cover material cards */
+      removeLeather();
+      removeFabric();
+
+      /* Remove all hardware cards */
+      HW_MATERIALS.forEach(function(mat) { removeHwCard(mat.id); });
+
+      /* Clear department toggles */
+      ['deboss','offset','flatbed','sewing','woodshop','metal'].forEach(function(k) {
+        var btn = document.getElementById('dept-btn-' + k);
+        if (btn) btn.classList.remove('active');
+      });
+      var metalCard = document.getElementById('metal-detail-card');
+      if (metalCard) metalCard.style.display = 'none';
+
+      /* Remove interior cards */
+      removeInterior('cb');
+      removeInterior('pockets');
+      removeInterior('tabs');
+
+      /* Clear notes */
+      document.getElementById('notes-field').value = '';
+
+      updateTierUI();
+      renderPlannerChips();
+      document.getElementById('job-order').focus();
+    }
+
+    function resumePlannerJob(id) {
+      var state = loadPlannerJob(id);
+      if (!state) return;
+      CURRENT_PLANNER_JOB = id;
+      applyState(state);
+      renderPlannerChips();
+    }
+
+    /* =============================================================
+       JOB NUMBER BLUR — save & register draft
+    ============================================================= */
+    function onJobOrderBlur(val) {
+      if (/^\d{6}$/.test(val)) {
+        CURRENT_PLANNER_JOB = val;
+        var state = collectCurrentState();
+        savePlannerJob(val, state);
+        renderPlannerChips();
+      }
     }
 
     /* =============================================================
@@ -859,6 +1023,9 @@
         document.getElementById('stateEmbed').textContent = '';
         document.getElementById('print-date').textContent = '';
         window.removeEventListener('afterprint', onAP);
+        /* Remove exported draft and start fresh */
+        if (CURRENT_PLANNER_JOB) removePlannerJob(CURRENT_PLANNER_JOB);
+        newDraft();
       });
 
       _origPrint();
@@ -882,6 +1049,9 @@
     /* Default date received to today */
     document.getElementById('date-received').value = new Date().toISOString().slice(0, 10);
     updateTierUI();
+
+    /* Show any saved drafts from a previous session */
+    renderPlannerChips();
 
     /* Bookcloth vendor datalist */
     (function() {
